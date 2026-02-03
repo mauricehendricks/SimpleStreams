@@ -9,7 +9,7 @@ export default function TabLayout() {
         tabBarStyle: { display: 'none' }, // Hide tab bar since we only have one screen
       }}>
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: 'Dashboard',
         }}
