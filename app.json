@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "PortfolioKing",
-    "slug": "PortfolioKing",
+    "name": "Simple Streams",
+    "slug": "simple-streams",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "portfolioking",
+    "scheme": "simplestreams",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
