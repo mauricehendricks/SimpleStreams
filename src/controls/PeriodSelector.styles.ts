@@ -30,7 +30,7 @@ export const styles = StyleSheet.create({
   buttonText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#666',
+    color: '#8E8E93',
   },
   buttonTextActive: {
     color: '#FFFFFF',

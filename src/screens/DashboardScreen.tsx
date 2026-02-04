@@ -20,6 +20,7 @@ import { TabSelector } from '../controls/TabSelector';
 import { useHydrationGate } from '../hooks/useHydrationGate';
 import { useViewComputed } from '../hooks/useViewComputed';
 import { Stream, ViewPeriod } from '../state/types';
+import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
 import {
   getCashFlowExpenseColor,
@@ -47,6 +48,7 @@ export default function DashboardScreen() {
   const [streamToDelete, setStreamToDelete] = useState<{ id: string; name: string } | null>(null);
   const [showTaxAllocationSheet, setShowTaxAllocationSheet] = useState(false);
 
+  const isPremium = usePremiumStore((state) => state.isPremium);
   const view = useSimpleStreamsStore((state) => state.getActiveView());
   const incomeStreams = view?.income || [];
   const expenseStreams = view?.expenses || [];
@@ -306,17 +308,20 @@ export default function DashboardScreen() {
         };
       });
 
-      // Always add taxes as a virtual expense (even if $0)
-      const hasOtherExpenses = expenseData.length > 0;
-      const taxValue = !hasOtherExpenses && taxAmount === 0 ? 0.01 : taxAmount;
-      
-      expenseData.push({
-        value: taxValue,
-        color: expenseColorMap.taxColor || getCashFlowExpenseColor(),
-        label: 'Taxes',
-      });
+      // Only add taxes if premium
+      if (isPremium) {
+        // Always add taxes as a virtual expense (even if $0)
+        const hasOtherExpenses = expenseData.length > 0;
+        const taxValue = !hasOtherExpenses && taxAmount === 0 ? 0.01 : taxAmount;
+        
+        expenseData.push({
+          value: taxValue,
+          color: expenseColorMap.taxColor || getCashFlowExpenseColor(),
+          label: 'Taxes',
+        });
+      }
 
-      // Sort all expenses including taxes
+      // Sort all expenses (including taxes if premium)
       return expenseData.sort((a, b) => a.value - b.value);
     } else {
       // Net Margin tab - 2 slices (sort by value, least to most)
@@ -337,7 +342,7 @@ export default function DashboardScreen() {
       }
       return data.sort((a, b) => a.value - b.value);
     }
-  }, [activeTab, incomeStreams, expenseStreams, viewPeriod, incomeTotal, expenseTotalWithTax, taxAmount, incomeColorMap, expenseColorMap, getConvertedAmount]);
+  }, [activeTab, incomeStreams, expenseStreams, viewPeriod, incomeTotal, expenseTotalWithTax, taxAmount, incomeColorMap, expenseColorMap, getConvertedAmount, isPremium]);
 
   const currentStreams = activeTab === 'income' ? incomeStreams : expenseStreams;
   const total = activeTab === 'income' ? incomeTotal : activeTab === 'expense' ? expenseTotalWithTax : netTotal;
@@ -412,7 +417,7 @@ export default function DashboardScreen() {
           />
         )}
 
-        {activeTab === 'expense' && (
+        {activeTab === 'expense' && chartData.length > 0 && (
           <StreamsList
             activeTab={activeTab}
             streams={currentStreams}

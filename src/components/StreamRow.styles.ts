@@ -25,7 +25,7 @@ export const streamRowStyles = StyleSheet.create({
   },
   streamAmount: {
     fontSize: 14,
-    color: '#666',
+    color: '#8E8E93',
   },
   streamOriginal: {
     fontSize: 12,

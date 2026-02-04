@@ -16,15 +16,8 @@ export type View = {
   taxAllocationRate: number; // 0–100, default 30
 };
 
-export type Profile = {
-  id: string;
-  name: string;
+export type AppState = {
+  schemaVersion: number; // 3
   views: View[];
   activeViewId: string;
-};
-
-export type AppState = {
-  schemaVersion: number; // 1
-  profiles: Profile[];
-  activeProfileId: string;
 };

@@ -22,7 +22,6 @@ export const styles = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     flex: 1,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
     ...Platform.select({
       ios: {
@@ -36,16 +35,6 @@ export const styles = StyleSheet.create({
       },
     }),
   },
-  drawerHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#C0C0C0',
-    borderRadius: 2,
-    alignSelf: 'center',
-    position: 'absolute',
-    top: 12,
-    zIndex: 1,
-  },
   modalContent: {
     paddingHorizontal: 24,
     paddingBottom: 8,
@@ -58,8 +47,8 @@ export const styles = StyleSheet.create({
     marginBottom: 24,
   },
   modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
     color: '#101A3A',
     flex: 1,
   },
@@ -76,7 +65,7 @@ export const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 24,
-    color: '#666',
+    color: '#8E8E93',
     lineHeight: 24,
   },
 });

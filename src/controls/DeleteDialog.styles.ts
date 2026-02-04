@@ -40,7 +40,7 @@ export const styles = StyleSheet.create({
   },
   message: {
     fontSize: 16,
-    color: '#666',
+    color: '#8E8E93',
     marginBottom: 24,
     lineHeight: 22,
   },

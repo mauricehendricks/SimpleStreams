@@ -48,6 +48,6 @@ export const styles = StyleSheet.create({
   },
   streamAmount: {
     fontSize: 14,
-    color: '#666',
+    color: '#8E8E93',
   },
 });

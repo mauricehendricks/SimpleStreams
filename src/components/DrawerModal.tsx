@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './DrawerModal.styles';
 
 interface DrawerModalProps {
@@ -22,6 +23,8 @@ export function DrawerModal({
   children,
   title,
 }: DrawerModalProps) {
+  const insets = useSafeAreaInsets();
+  
   return (
     <Modal
       visible={visible}
@@ -40,8 +43,10 @@ export function DrawerModal({
           style={styles.drawerContainer}
           keyboardVerticalOffset={0}
         >
-          <View style={styles.drawerContent} onStartShouldSetResponder={() => true}>
-            <View style={styles.drawerHandle} />
+          <View 
+            style={[styles.drawerContent, { paddingTop: insets.top + 12 }]} 
+            onStartShouldSetResponder={() => true}
+          >
             <View style={styles.modalContent}>
               {title && (
                 <View style={styles.modalHeader}>

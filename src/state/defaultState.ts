@@ -1,26 +1,19 @@
-import type { AppState, Profile, View } from './types';
+import type { AppState, View } from './types';
 
 // Default state factory (fresh install)
 export function createDefaultState(): AppState {
   const defaultView: View = {
     id: 'view-1',
-    name: 'View',
+    name: 'Dashboard',
     income: [],
     expenses: [],
     taxAllocationRate: 30,
   };
 
-  const defaultProfile: Profile = {
-    id: 'profile-1',
-    name: 'Personal',
+  return {
+    schemaVersion: 3,
     views: [defaultView],
     activeViewId: 'view-1',
-  };
-
-  return {
-    schemaVersion: 2,
-    profiles: [defaultProfile],
-    activeProfileId: 'profile-1',
   };
 }
 

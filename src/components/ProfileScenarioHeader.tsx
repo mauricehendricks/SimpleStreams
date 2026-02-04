@@ -3,15 +3,12 @@ import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
-import { ProfilePickerSheet } from './ProfilePickerSheet';
 import { styles } from './ProfileScenarioHeader.styles';
 import { ViewPickerSheet } from './ViewPickerSheet';
 
 export function ProfileScenarioHeader() {
-  const [showProfilePicker, setShowProfilePicker] = useState(false);
   const [showViewPicker, setShowViewPicker] = useState(false);
   const isPremium = usePremiumStore((state) => state.isPremium);
-  const profile = useSimpleStreamsStore((state) => state.getActiveProfile());
   const view = useSimpleStreamsStore((state) => state.getActiveView());
 
   // Truncate to 20 characters max
@@ -20,11 +17,10 @@ export function ProfileScenarioHeader() {
     return text.substring(0, maxLength - 3) + '...';
   };
 
-  const profileName = truncateText(profile?.name || 'Personal');
-  const viewName = truncateText(view?.name || 'View');
+  const viewName = truncateText(view?.name || 'Dashboard');
 
   if (!isPremium) {
-    // Free tier: show only profile name (View is not editable)
+    // Free tier: show only "Dashboard"
     return (
       <View style={styles.container}>
         <Text
@@ -38,46 +34,28 @@ export function ProfileScenarioHeader() {
     );
   }
 
-  // Premium: interactive with chevrons
+  // Premium: interactive with chevron
   return (
     <>
       <View style={styles.container}>
         <TouchableOpacity
           style={styles.touchable}
-          onPress={() => setShowProfilePicker(true)}
+          onPress={() => setShowViewPicker(true)}
         >
           <Text
             style={[styles.text, styles.touchableText]}
             numberOfLines={1}
             ellipsizeMode="tail"
           >
-            {profileName}
+            {viewName}
           </Text>
-          <ChevronDown size={16} color="#666" />
+          <ChevronDown size={16} color="#8E8E93" />
         </TouchableOpacity>
-        <Text style={styles.separator}>•</Text>
-              <TouchableOpacity
-                style={styles.touchable}
-                onPress={() => setShowViewPicker(true)}
-              >
-                <Text
-                  style={[styles.text, styles.touchableText]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {viewName}
-                </Text>
-                <ChevronDown size={16} color="#666" />
-              </TouchableOpacity>
-            </View>
-            <ProfilePickerSheet
-              visible={showProfilePicker}
-              onClose={() => setShowProfilePicker(false)}
-            />
-            <ViewPickerSheet
-              visible={showViewPicker}
-              onClose={() => setShowViewPicker(false)}
-            />
+      </View>
+      <ViewPickerSheet
+        visible={showViewPicker}
+        onClose={() => setShowViewPicker(false)}
+      />
     </>
   );
 }

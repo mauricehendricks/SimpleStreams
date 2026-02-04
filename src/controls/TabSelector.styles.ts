@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
   segmentText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#666',
+    color: '#8E8E93',
   },
   segmentTextActive: {
     color: '#101A3A',

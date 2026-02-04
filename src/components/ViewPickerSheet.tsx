@@ -26,15 +26,13 @@ export function ViewPickerSheet({
   const [showAddInput, setShowAddInput] = useState(false);
   const [editingViewId, setEditingViewId] = useState<string | null>(null);
   const [editViewName, setEditViewName] = useState('');
-  const profile = useSimpleStreamsStore((state) => state.getActiveProfile());
+  const views = useSimpleStreamsStore((state) => state.views);
+  const activeViewId = useSimpleStreamsStore((state) => state.activeViewId);
   const setActiveView = useSimpleStreamsStore((state) => state.setActiveView);
   const addView = useSimpleStreamsStore((state) => state.addView);
   const updateView = useSimpleStreamsStore((state) => state.updateView);
   const deleteView = useSimpleStreamsStore((state) => state.deleteView);
   const isPremium = usePremiumStore((state) => state.isPremium);
-
-  const views = profile?.views || [];
-  const activeViewId = profile?.activeViewId;
 
   const handleSelectView = (viewId: string) => {
     setActiveView(viewId);

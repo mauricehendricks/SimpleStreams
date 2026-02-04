@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 16,
-    color: '#666',
+    color: '#8E8E93',
     textAlign: 'center',
   },
 });

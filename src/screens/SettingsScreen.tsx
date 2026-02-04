@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createDefaultState } from '../state/defaultState';
 import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
@@ -19,6 +20,7 @@ const APP_STORAGE_KEY = 'simple_streams_state_v1';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const isPremium = usePremiumStore((state) => state.isPremium);
   const setIsPremium = usePremiumStore((state) => state.setIsPremium);
   const resetAllDataToDefaults = useSimpleStreamsStore(
@@ -63,7 +65,13 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingTop: insets.top + 12 }
+        ]}
+      >
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
@@ -101,7 +109,7 @@ export default function SettingsScreen() {
             <Text style={styles.resetButtonText}>Reset Data</Text>
           </TouchableOpacity>
           <Text style={styles.resetDescription}>
-            This will delete all profiles, views, and streams. Premium status will not be affected.
+            This will delete all dashboard views and cash flow streams. Premium status will not be affected.
           </Text>
         </View>
       </ScrollView>

@@ -1,7 +1,7 @@
 import { createDefaultState } from './defaultState';
 import { AppState } from './types';
 
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 /**
  * Migrate state from any version to current version
@@ -38,17 +38,26 @@ export function migrateState(raw: any): AppState {
 
   // Version 0: Legacy data (no schemaVersion) - treat as version 1 and migrate
   if (schemaVersion === 0) {
-    console.log('Migration: Legacy data detected (no schemaVersion). Treating as version 1 and migrating to version 2.');
+    console.log('Migration: Legacy data detected (no schemaVersion). Treating as version 1 and migrating to version 3.');
     // Set schemaVersion to 1 for migration
     (candidate as any).schemaVersion = 1;
-    const migrated = migrateV1ToV2(candidate);
+    let migrated = migrateV1ToV2(candidate);
+    migrated = migrateV2ToV3(migrated);
     return validateAndFixAppState(migrated);
   }
 
   // Migrate from version 1 to 2: scenarios → views
   if (schemaVersion === 1) {
     console.log('Migration: Migrating from schema version 1 to 2 (scenarios → views)');
-    const migrated = migrateV1ToV2(candidate);
+    let migrated = migrateV1ToV2(candidate);
+    migrated = migrateV2ToV3(migrated);
+    return validateAndFixAppState(migrated);
+  }
+
+  // Migrate from version 2 to 3: remove Profile wrapper, flatten to views[]
+  if (schemaVersion === 2) {
+    console.log('Migration: Migrating from schema version 2 to 3 (removing Profile wrapper)');
+    const migrated = migrateV2ToV3(candidate);
     return validateAndFixAppState(migrated);
   }
 
@@ -96,6 +105,68 @@ function migrateV1ToV2(raw: any): any {
 }
 
 /**
+ * Migrate from schema version 2 to 3
+ * Removes Profile wrapper and flattens to views[] array
+ */
+function migrateV2ToV3(raw: any): any {
+  if (!raw || typeof raw !== 'object') {
+    return raw;
+  }
+
+  // Update schema version
+  raw.schemaVersion = 3;
+
+  // Extract all views from all profiles into a flat array
+  const allViews: any[] = [];
+  let activeViewId: string | null = null;
+
+  if (Array.isArray(raw.profiles)) {
+    raw.profiles.forEach((profile: any) => {
+      if (!profile || typeof profile !== 'object') {
+        return;
+      }
+
+      const profileName = profile.name || 'Dashboard';
+      const views = profile.views || [];
+
+      views.forEach((view: any) => {
+        if (!view || typeof view !== 'object') {
+          return;
+        }
+
+        // If there are multiple views in a profile, combine names
+        // Otherwise keep the view name as-is
+        const viewName = views.length > 1 
+          ? `${profileName} - ${view.name || 'Dashboard'}`
+          : (view.name || 'Dashboard');
+
+        allViews.push({
+          ...view,
+          name: viewName,
+        });
+
+        // If this is the active profile and active view, remember it
+        if (profile.id === raw.activeProfileId && view.id === profile.activeViewId) {
+          activeViewId = view.id;
+        }
+      });
+    });
+  }
+
+  // Set the flattened views array
+  raw.views = allViews;
+
+  // Set activeViewId (use the active view from active profile, or first view)
+  raw.activeViewId = activeViewId || (allViews.length > 0 ? allViews[0].id : 'view-1');
+
+  // Remove old profile-related fields
+  delete raw.profiles;
+  delete raw.activeProfileId;
+
+  return raw;
+}
+
+/**
  * Validate and fix AppState structure
  * Always returns a valid AppState - creates default if unrecoverable
  */
@@ -112,109 +183,66 @@ function validateAndFixAppState(raw: any): AppState {
       raw.schemaVersion = CURRENT_SCHEMA_VERSION;
     }
 
-    // Ensure profiles is an array
-    if (!Array.isArray(raw.profiles)) {
-      console.warn('Migration: profiles is not an array. Using default state.');
+    // For schema version 3+, validate flat views structure
+    if (raw.schemaVersion >= 3) {
+      // Ensure views is an array
+      if (!Array.isArray(raw.views)) {
+        console.warn('Migration: views is not an array. Using default state.');
+        return createDefaultState();
+      }
+
+      // Ensure at least one view exists
+      if (raw.views.length === 0) {
+        console.warn('Migration: No views found. Using default state.');
+        return createDefaultState();
+      }
+
+      // Ensure activeViewId is a string
+      if (typeof raw.activeViewId !== 'string') {
+        // Try to use first view's id
+        if (raw.views.length > 0 && raw.views[0]?.id) {
+          raw.activeViewId = raw.views[0].id;
+        } else {
+          console.warn('Migration: Cannot determine activeViewId. Using default state.');
+          return createDefaultState();
+        }
+      }
+
+      // Ensure activeViewId exists in views
+      const activeView = raw.views.find(
+        (v: any) => v.id === raw.activeViewId
+      );
+      
+      if (!activeView) {
+        // Use first view
+        if (raw.views.length > 0) {
+          raw.activeViewId = raw.views[0].id;
+        } else {
+          console.warn('Migration: Cannot find active view. Using default state.');
+          return createDefaultState();
+        }
+      }
+
+      // Validate stream arrays for active view
+      const viewToValidate = raw.views.find(
+        (v: any) => v.id === raw.activeViewId
+      );
+      if (viewToValidate) {
+        if (!Array.isArray(viewToValidate.income)) {
+          viewToValidate.income = [];
+        }
+        if (!Array.isArray(viewToValidate.expenses)) {
+          viewToValidate.expenses = [];
+        }
+        if (typeof viewToValidate.taxAllocationRate !== 'number') {
+          viewToValidate.taxAllocationRate = 30;
+        }
+      }
+    } else {
+      // For older schema versions (0-2), this function shouldn't be called
+      // as they should be migrated first
+      console.warn('Migration: validateAndFixAppState called on old schema version. Using default state.');
       return createDefaultState();
-    }
-
-    // Ensure at least one profile exists
-    if (raw.profiles.length === 0) {
-      console.warn('Migration: No profiles found. Using default state.');
-      return createDefaultState();
-    }
-
-    // Ensure activeProfileId is a string
-    if (typeof raw.activeProfileId !== 'string') {
-      // Try to use first profile's id
-      if (raw.profiles.length > 0 && raw.profiles[0]?.id) {
-        raw.activeProfileId = raw.profiles[0].id;
-      } else {
-        console.warn('Migration: Cannot determine activeProfileId. Using default state.');
-        return createDefaultState();
-      }
-    }
-
-    // Ensure activeProfileId exists
-    let activeProfile = raw.profiles.find(
-      (p: any) => p.id === raw.activeProfileId
-    );
-    
-    if (!activeProfile) {
-      // Try to use first profile
-      if (raw.profiles.length > 0) {
-        activeProfile = raw.profiles[0];
-        raw.activeProfileId = activeProfile.id;
-      } else {
-        console.warn('Migration: Cannot find active profile. Using default state.');
-        return createDefaultState();
-      }
-    }
-
-    // Ensure views array exists (handle both old 'scenarios' and new 'views')
-    if (!Array.isArray(activeProfile.views)) {
-      // Try to migrate from old 'scenarios' if it exists
-      if (Array.isArray(activeProfile.scenarios)) {
-        activeProfile.views = activeProfile.scenarios;
-        delete activeProfile.scenarios;
-      } else {
-        activeProfile.views = [];
-      }
-    }
-
-    // Ensure at least one view exists
-    if (activeProfile.views.length === 0) {
-      // Create default view
-      activeProfile.views = [{
-        id: 'view-1',
-        name: 'View',
-        income: [],
-        expenses: [],
-        taxAllocationRate: 30,
-      }];
-      activeProfile.activeViewId = 'view-1';
-    }
-
-    // Handle migration from activeScenarioId to activeViewId
-    if (activeProfile.activeScenarioId && !activeProfile.activeViewId) {
-      activeProfile.activeViewId = activeProfile.activeScenarioId;
-      delete activeProfile.activeScenarioId;
-    }
-
-    // Ensure activeViewId is a string
-    if (typeof activeProfile.activeViewId !== 'string') {
-      activeProfile.activeViewId = activeProfile.views[0]?.id || 'view-1';
-    }
-
-    // Ensure activeViewId exists in views
-    const activeView = activeProfile.views.find(
-      (v: any) => v.id === activeProfile.activeViewId
-    );
-    
-    if (!activeView) {
-      // Use first view
-      if (activeProfile.views.length > 0) {
-        activeProfile.activeViewId = activeProfile.views[0].id;
-      } else {
-        console.warn('Migration: Cannot find active view. Using default state.');
-        return createDefaultState();
-      }
-    }
-
-    // Validate stream arrays
-    const viewToValidate = activeProfile.views.find(
-      (v: any) => v.id === activeProfile.activeViewId
-    );
-    if (viewToValidate) {
-      if (!Array.isArray(viewToValidate.income)) {
-        viewToValidate.income = [];
-      }
-      if (!Array.isArray(viewToValidate.expenses)) {
-        viewToValidate.expenses = [];
-      }
-      if (typeof viewToValidate.taxAllocationRate !== 'number') {
-        viewToValidate.taxAllocationRate = 30;
-      }
     }
 
     return raw as AppState;

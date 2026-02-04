@@ -16,7 +16,6 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
-    marginTop: Platform.OS === 'ios' ? 60 : 20,
     position: 'relative',
   },
   backButton: {
@@ -32,8 +31,8 @@ export const styles = StyleSheet.create({
     elevation: 10, // Android
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
     color: '#101A3A',
     textAlign: 'center',
     flex: 1,
@@ -72,7 +71,7 @@ export const styles = StyleSheet.create({
   },
   settingDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#8E8E93',
   },
   resetButton: {
     backgroundColor: '#EF5350',
@@ -88,7 +87,7 @@ export const styles = StyleSheet.create({
   },
   resetDescription: {
     fontSize: 12,
-    color: '#666',
+    color: '#8E8E93',
     textAlign: 'center',
   },
 });

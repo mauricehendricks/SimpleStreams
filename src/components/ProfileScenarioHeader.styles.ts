@@ -9,14 +9,6 @@ export const styles = StyleSheet.create({
     flexShrink: 1,
     minWidth: 0,
   },
-  containerCentered: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 1,
-    minWidth: 0,
-    width: '100%',
-  },
   text: {
     fontSize: 20,
     fontWeight: '600',
@@ -27,7 +19,7 @@ export const styles = StyleSheet.create({
   },
   separator: {
     fontSize: 20,
-    color: '#666',
+    color: '#8E8E93',
   },
   touchable: {
     flexDirection: 'row',
