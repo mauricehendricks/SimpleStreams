@@ -14,7 +14,7 @@ export function PeriodSelector({ viewPeriod, onPeriodChange }: PeriodSelectorPro
     <View style={styles.container}>
       <Text style={styles.label}>View Period:</Text>
       <View style={styles.buttons}>
-        {(['monthly', 'weekly', 'biweekly', 'yearly'] as ViewPeriod[]).map((period) => (
+        {(['monthly', 'weekly', 'semimonthly', 'yearly'] as ViewPeriod[]).map((period) => (
           <TouchableOpacity
             key={period}
             style={[

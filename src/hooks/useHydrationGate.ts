@@ -1,11 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState } from 'react';
 import { createDefaultState } from '../state/defaultState';
-import { migrateState } from '../state/migrations';
+import { CURRENT_SCHEMA_VERSION, migrateState } from '../state/migrations';
 import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
-
-const APP_STORAGE_KEY = 'simple_streams_state_v1';
+import { APP_STORAGE_KEY } from '../utils/constants';
 
 const HYDRATION_TIMEOUT = 5000; // 5 seconds (increased for slower devices)
 
@@ -172,7 +171,7 @@ export function useHydrationGate() {
       const defaultState = createDefaultState();
       await AsyncStorage.setItem(APP_STORAGE_KEY, JSON.stringify({
         state: defaultState,
-        version: 2,
+        version: CURRENT_SCHEMA_VERSION,
       }));
       setStatus('ready');
     } catch (error) {

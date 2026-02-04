@@ -1,3 +1,6 @@
+// Storage keys
+export const APP_STORAGE_KEY = 'simple_streams_state_v1';
+
 // iPhone calendar-like color palette
 export const COLOR_PALETTE = [
   '#FF3B30', // Red

@@ -14,6 +14,8 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   button: {
     paddingHorizontal: 16,
@@ -22,6 +24,8 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    minWidth: 0,
+    flexShrink: 1,
   },
   buttonActive: {
     backgroundColor: '#1A3FBC',
@@ -31,6 +35,7 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#8E8E93',
+    textAlign: 'center',
   },
   buttonTextActive: {
     color: '#FFFFFF',

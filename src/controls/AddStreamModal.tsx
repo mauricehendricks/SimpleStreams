@@ -67,7 +67,7 @@ export function AddStreamModal({
         />
         <Text style={styles.inputLabel}>Amount Period:</Text>
                 <View style={styles.modalPeriodSelector}>
-                  {(['monthly', 'weekly', 'biweekly', 'yearly'] as ViewPeriod[]).map((period) => (
+                  {(['monthly', 'weekly', 'semimonthly', 'yearly'] as ViewPeriod[]).map((period) => (
                     <TouchableOpacity
                       key={period}
                       style={[

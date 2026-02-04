@@ -4,7 +4,7 @@ import { ViewPeriod } from '../state/types';
 export const VIEW_PERIOD_FACTORS: Record<ViewPeriod, number> = {
   monthly: 12,
   weekly: 52,
-  biweekly: 24,
+  semimonthly: 24,
   yearly: 1,
 };
 
@@ -30,12 +30,12 @@ export function convertAmount(
 export function getViewPeriodLabel(viewPeriod: ViewPeriod): string {
   switch (viewPeriod) {
     case 'monthly':
-      return 'Monthly';
+      return 'Month';
     case 'weekly':
-      return 'Weekly';
-    case 'biweekly':
-      return 'Bi-Weekly';
+      return 'Week';
+    case 'semimonthly':
+      return 'Semi-month';
     case 'yearly':
-      return 'Yearly';
+      return 'Year';
   }
 }

@@ -223,6 +223,28 @@ function validateAndFixAppState(raw: any): AppState {
         }
       }
 
+      // Migrate "biweekly" to "semimonthly" in all views
+      raw.views.forEach((view: any) => {
+        if (view && typeof view === 'object') {
+          // Migrate income streams
+          if (Array.isArray(view.income)) {
+            view.income.forEach((stream: any) => {
+              if (stream && stream.viewPeriod === 'biweekly') {
+                stream.viewPeriod = 'semimonthly';
+              }
+            });
+          }
+          // Migrate expense streams
+          if (Array.isArray(view.expenses)) {
+            view.expenses.forEach((stream: any) => {
+              if (stream && stream.viewPeriod === 'biweekly') {
+                stream.viewPeriod = 'semimonthly';
+              }
+            });
+          }
+        }
+      });
+
       // Validate stream arrays for active view
       const viewToValidate = raw.views.find(
         (v: any) => v.id === raw.activeViewId

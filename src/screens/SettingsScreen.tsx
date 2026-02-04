@@ -12,11 +12,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createDefaultState } from '../state/defaultState';
+import { CURRENT_SCHEMA_VERSION } from '../state/migrations';
 import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
+import { APP_STORAGE_KEY } from '../utils/constants';
 import { styles } from './SettingsScreen.styles';
-
-const APP_STORAGE_KEY = 'simple_streams_state_v1';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -50,7 +50,7 @@ export default function SettingsScreen() {
               const defaultState = createDefaultState();
               await AsyncStorage.setItem(APP_STORAGE_KEY, JSON.stringify({
                 state: defaultState,
-                version: 2,
+                version: CURRENT_SCHEMA_VERSION,
               }));
               Alert.alert('Success', 'Data has been reset.');
             } catch (error) {

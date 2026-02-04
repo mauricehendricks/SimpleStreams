@@ -2,12 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { assignColorsToStreams, getExpenseColor, getIncomeColor } from '../utils/colorAssignment';
+import { APP_STORAGE_KEY } from '../utils/constants';
 import { createDefaultState } from './defaultState';
 import { migrateState } from './migrations';
 import { AppState, Stream, View } from './types';
 import { usePremiumStore } from './usePremiumStore';
-
-const APP_STORAGE_KEY = 'simple_streams_state_v1';
 
 interface SimpleStreamsState extends AppState {
   // Actions

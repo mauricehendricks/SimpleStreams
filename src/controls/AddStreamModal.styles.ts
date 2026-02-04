@@ -102,6 +102,8 @@ export const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     marginBottom: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalPeriodButton: {
     paddingHorizontal: 14,
@@ -110,6 +112,8 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    minWidth: 0,
+    flexShrink: 1,
   },
   modalPeriodButtonActive: {
     backgroundColor: '#1A3FBC',
@@ -119,6 +123,7 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#8E8E93',
+    textAlign: 'center',
   },
   modalPeriodButtonTextActive: {
     color: '#FFFFFF',

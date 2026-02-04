@@ -1,4 +1,4 @@
-export type ViewPeriod = "weekly" | "biweekly" | "monthly" | "yearly";
+export type ViewPeriod = "weekly" | "semimonthly" | "monthly" | "yearly";
 
 export type Stream = {
   id: string;
