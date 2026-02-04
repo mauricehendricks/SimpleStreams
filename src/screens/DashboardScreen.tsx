@@ -61,7 +61,6 @@ export default function DashboardScreen() {
 
   const {
     incomeTotal,
-    expenseTotal,
     taxAmount,
     expenseTotalWithTax,
     netTotal,

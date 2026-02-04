@@ -1,16 +1,17 @@
 import { useMemo } from 'react';
 import { ViewPeriod } from '../state/types';
+import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
 import { convertAmount } from '../utils/periodConversion';
 
 export function useViewComputed(viewPeriod: ViewPeriod) {
   const view = useSimpleStreamsStore((state) => state.getActiveView());
+  const isPremium = usePremiumStore((state) => state.isPremium);
 
   return useMemo(() => {
     if (!view) {
       return {
         incomeTotal: 0,
-        expenseTotal: 0,
         taxAmount: 0,
         expenseTotalWithTax: 0,
         netTotal: 0,
@@ -28,8 +29,9 @@ export function useViewComputed(viewPeriod: ViewPeriod) {
       return sum + convertAmount(stream.amount, stream.viewPeriod, viewPeriod);
     }, 0);
 
-    // Calculate tax amount
-    const taxAmount = incomeTotal * (view.taxAllocationRate / 100);
+    // Calculate tax amount (only for premium users)
+    // Free users should have no tax impact on their calculations
+    const taxAmount = isPremium ? incomeTotal * (view.taxAllocationRate / 100) : 0;
 
     // Expense total including tax
     const expenseTotalWithTax = expenseTotal + taxAmount;
@@ -43,11 +45,10 @@ export function useViewComputed(viewPeriod: ViewPeriod) {
 
     return {
       incomeTotal,
-      expenseTotal,
       taxAmount,
       expenseTotalWithTax,
       netTotal,
       netMarginPercent,
     };
-  }, [view, viewPeriod]);
+  }, [view, viewPeriod, isPremium]);
 }
