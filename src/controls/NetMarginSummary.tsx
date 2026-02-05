@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { ViewPeriod } from '../state/types';
+import { usePremiumStore } from '../state/usePremiumStore';
 import { getCashFlowExpenseColor, getCashFlowIncomeColor } from '../utils/colorAssignment';
 import { formatCurrency, formatPercent } from '../utils/format';
 import { getViewPeriodLabel } from '../utils/periodConversion';
@@ -19,6 +20,8 @@ export function NetMarginSummary({
   viewPeriod,
   getStreamPercent,
 }: NetMarginSummaryProps) {
+  const isPremium = usePremiumStore((state) => state.isPremium);
+
   if (incomeTotal === 0 && expenseTotalWithTax === 0) {
     return null;
   }
@@ -36,7 +39,7 @@ export function NetMarginSummary({
   if (expenseTotalWithTax > 0) {
     items.push({
       id: 'expense',
-      name: 'Expenses (with tax)',
+      name: isPremium ? 'Expenses (with tax)' : 'Expenses',
       amount: expenseTotalWithTax,
       color: getCashFlowExpenseColor(),
     });
