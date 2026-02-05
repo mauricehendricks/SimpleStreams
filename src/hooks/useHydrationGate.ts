@@ -9,6 +9,10 @@ import { resetAllData } from '../utils/dataReset';
 
 const HYDRATION_TIMEOUT = 5000; // 5 seconds (increased for slower devices)
 
+// Set to true to simulate slow loading for testing skeleton
+const SIMULATE_SLOW_LOADING = false;
+const SLOW_LOADING_DELAY = 2000; // 2 seconds delay
+
 export type HydrationStatus = 'loading' | 'ready' | 'error';
 
 export function useHydrationGate() {
@@ -22,6 +26,11 @@ export function useHydrationGate() {
 
     const hydrate = async () => {
       try {
+        // Simulate slow loading for testing skeleton
+        if (SIMULATE_SLOW_LOADING) {
+          await new Promise(resolve => setTimeout(resolve, SLOW_LOADING_DELAY));
+        }
+
         // Load premium status (can happen in parallel)
         await premiumStore.loadPremium();
 

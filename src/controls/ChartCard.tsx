@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
 import { Stream } from '../state/types';
-import { formatCurrency, formatPercent } from '../utils/format';
+import { formatChartCurrency, formatPercent, getDigitCount } from '../utils/format';
 import { styles } from './ChartCard.styles';
 
 type TabType = 'income' | 'expense' | 'net';
@@ -25,6 +25,9 @@ export function ChartCard({
   total,
   netMarginPercent,
 }: ChartCardProps) {
+  const digitCount = getDigitCount(total);
+  const fontSize = digitCount > 6 ? 18 : 24; // Shrink font if over 6 digits
+
   return (
     <View style={styles.card}>
       {chartData.length > 0 ? (
@@ -38,8 +41,8 @@ export function ChartCard({
             initialAngle={0}
             centerLabelComponent={() => (
               <View style={styles.centerLabel}>
-                <Text style={styles.centerValue}>
-                  {formatCurrency(total)}
+                <Text style={[styles.centerValue, { fontSize }]}>
+                  {formatChartCurrency(total)}
                 </Text>
                 {activeTab === 'net' && (
                   <View style={styles.badge}>
