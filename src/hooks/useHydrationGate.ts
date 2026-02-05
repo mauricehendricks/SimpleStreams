@@ -39,12 +39,12 @@ export function useHydrationGate() {
         try {
           stored = await AsyncStorage.getItem(APP_STORAGE_KEY);
         } catch (storageError) {
-          // Storage unavailable - keep current in-memory state (default on first launch)
+          // Storage unavailable - show error state
           console.error('[Hydration] AsyncStorage.getItem failed:', storageError);
           if (mounted) {
             hydrationCompletedRef.current = true;
             clearTimeout(timeoutId);
-            setStatus('ready');
+            setStatus('error');
           }
           return;
         }
@@ -76,20 +76,13 @@ export function useHydrationGate() {
         try {
           parsed = JSON.parse(stored);
         } catch (parseError) {
-          // Corrupted data - reset to default and clear storage
+          // Corrupted data - show error state so user can retry or reset
           console.error('[Hydration] JSON parse error:', parseError);
           console.error('[Hydration] Stored data (first 200 chars):', stored?.substring(0, 200));
-          const defaultState = createDefaultState();
-          useSimpleStreamsStore.setState(defaultState);
-          try {
-            await AsyncStorage.removeItem(APP_STORAGE_KEY);
-          } catch (removeError) {
-            // Ignore
-          }
           if (mounted) {
             hydrationCompletedRef.current = true;
             clearTimeout(timeoutId);
-            setStatus('ready');
+            setStatus('error');
           }
           return;
         }
@@ -107,22 +100,22 @@ export function useHydrationGate() {
           setStatus('ready');
         }
       } catch (error) {
-        // Unexpected error - keep current in-memory state (default on first launch)
+        // Unexpected error - show error state
         console.error('[Hydration] Unexpected hydration error:', error);
         if (mounted) {
           hydrationCompletedRef.current = true;
           clearTimeout(timeoutId);
-          setStatus('ready');
+          setStatus('error');
         }
       }
     };
 
-    // Timeout fallback - keep current in-memory state
+    // Timeout fallback - show error state
     timeoutId = setTimeout(() => {
       if (mounted && !hydrationCompletedRef.current) {
-        console.warn('[Hydration] Hydration timeout - using current in-memory state');
+        console.warn('[Hydration] Hydration timeout - showing error state');
         hydrationCompletedRef.current = true;
-        setStatus('ready');
+        setStatus('error');
       }
     }, HYDRATION_TIMEOUT);
 
@@ -159,10 +152,10 @@ export function useHydrationGate() {
       hydrationCompletedRef.current = true;
       setStatus('ready');
     } catch (error) {
-      // Retry failed - keep current in-memory state
+      // Retry failed - show error state
       console.error('[Hydration] Retry error:', error);
       hydrationCompletedRef.current = true;
-      setStatus('ready');
+      setStatus('error');
     }
   };
 
@@ -171,9 +164,9 @@ export function useHydrationGate() {
       await resetAllData();
       setStatus('ready');
     } catch (error) {
-      // Reset failed - keep current in-memory state
+      // Reset failed - show error state
       console.error('[Hydration] Reset error:', error);
-      setStatus('ready');
+      setStatus('error');
     }
   };
 

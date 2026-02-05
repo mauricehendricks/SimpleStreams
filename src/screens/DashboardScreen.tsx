@@ -229,9 +229,10 @@ export default function DashboardScreen() {
     
     // Calculate colors for all expenses + tax together based on converted amounts
     // This ensures tax gets the correct rank among all expenses
+    // Only include tax in ranking if taxAmount > 0 (exclude for non-premium users)
     const allExpenseItems = [
       ...streamsWithAmounts.map(item => ({ amount: item.convertedAmount, id: item.stream.id, isTax: false })),
-      { amount: taxAmount, id: 'tax', isTax: true }
+      ...(taxAmount > 0 ? [{ amount: taxAmount, id: 'tax', isTax: true }] : [])
     ];
     
     // Sort by amount to determine ranks (same logic as assignColorsToStreams)
