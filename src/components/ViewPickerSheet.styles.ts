@@ -92,19 +92,4 @@ export const styles = StyleSheet.create({
     color: '#1A3FBC',
     fontWeight: '600',
   },
-  addInputContainer: {
-    marginTop: 8,
-    marginBottom: 16,
-  },
-  addInput: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 16,
-    color: '#101A3A',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    marginBottom: 8,
-  },
 });

@@ -2,6 +2,8 @@
  * Color assignment utilities for auto-coloring streams based on values
  */
 
+import type { Stream } from '../state/types';
+
 // Primary colors
 const PRIMARY_BLUE = '#1A3FBC';
 const PRIMARY_RED = '#EF5350';
@@ -88,5 +90,47 @@ export function assignColorsToStreams<T extends { amount: number; id?: string }>
     const rank = streams.length > 1 ? index / (streams.length - 1) : 1;
     const color = type === 'income' ? getIncomeColor(rank) : getExpenseColor(rank);
     return { ...stream, color };
+  });
+}
+
+/**
+ * Helper function to assign colors to streams and map them back.
+ * This extracts the repeated pattern used in add/delete/update stream operations.
+ * 
+ * @param streams - Array of streams to assign colors to
+ * @param type - 'income' or 'expense' to determine color palette
+ * @param useExistingColorAsFallback - If true, use existing stream color as fallback (for updates).
+ *                                     If false, calculate fallback based on stream count (for add/delete).
+ * @returns Array of streams with assigned colors
+ */
+export function assignColorsToStreamsWithFallback(
+  streams: Stream[],
+  type: 'income' | 'expense',
+  useExistingColorAsFallback: boolean = false
+): Stream[] {
+  const streamsWithColors = assignColorsToStreams(
+    streams.map(s => ({ amount: s.amount, id: s.id })),
+    type
+  );
+  
+  // Determine fallback color strategy
+  let fallbackColor: string | undefined;
+  if (!useExistingColorAsFallback) {
+    // For add/delete: if there's only one stream, fallback to darkest color (rank 1), otherwise lightest (rank 0)
+    fallbackColor = streams.length === 1
+      ? (type === 'income' ? getIncomeColor(1) : getExpenseColor(1))
+      : (type === 'income' ? getIncomeColor(0) : getExpenseColor(0));
+  }
+  
+  // Map colors back to streams
+  return streams.map(s => {
+    const colorItem = streamsWithColors.find(c => c.id === s.id);
+    if (useExistingColorAsFallback) {
+      // For updates: use existing color as fallback
+      return { ...s, color: colorItem?.color || s.color };
+    } else {
+      // For add/delete: use calculated fallback
+      return { ...s, color: colorItem?.color || fallbackColor! };
+    }
   });
 }

@@ -41,7 +41,6 @@ export function TaxAllocationSheet({
   };
 
   const handleQuickSet = (value: number) => {
-    setTaxAllocationRate(value);
     setInputValue(value.toString());
   };
 

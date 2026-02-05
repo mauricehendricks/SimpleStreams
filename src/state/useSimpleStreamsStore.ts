@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { assignColorsToStreams, getExpenseColor, getIncomeColor } from '../utils/colorAssignment';
+import { assignColorsToStreamsWithFallback } from '../utils/colorAssignment';
 import { APP_STORAGE_KEY } from '../utils/constants';
 import { createDefaultState } from './defaultState';
 import { migrateState } from './migrations';
@@ -57,18 +57,7 @@ export const useSimpleStreamsStore = create<SimpleStreamsState>()(
 
           // Auto-assign color based on value rank
           const allStreams = [...view.income, stream];
-          const streamsWithColors = assignColorsToStreams(
-            allStreams.map(s => ({ amount: s.amount, id: s.id })),
-            'income'
-          );
-          
-          // Map colors back to streams
-          // If there's only one stream, fallback to darkest color (rank 1), otherwise lightest (rank 0)
-          const fallbackColor = allStreams.length === 1 ? getIncomeColor(1) : getIncomeColor(0);
-          const updatedStreams = allStreams.map(s => {
-            const colorItem = streamsWithColors.find(c => c.id === s.id);
-            return { ...s, color: colorItem?.color || fallbackColor };
-          });
+          const updatedStreams = assignColorsToStreamsWithFallback(allStreams, 'income', false);
 
           return {
             ...state,
@@ -88,18 +77,7 @@ export const useSimpleStreamsStore = create<SimpleStreamsState>()(
 
           // Remove stream and re-assign colors
           const remainingStreams = view.income.filter((st) => st.id !== streamId);
-          const streamsWithColors = assignColorsToStreams(
-            remainingStreams.map(s => ({ amount: s.amount, id: s.id })),
-            'income'
-          );
-          
-          // Map colors back to streams
-          // If there's only one stream, fallback to darkest color (rank 1), otherwise lightest (rank 0)
-          const fallbackColor = remainingStreams.length === 1 ? getIncomeColor(1) : getIncomeColor(0);
-          const finalStreams = remainingStreams.map(s => {
-            const colorItem = streamsWithColors.find(c => c.id === s.id);
-            return { ...s, color: colorItem?.color || fallbackColor };
-          });
+          const finalStreams = assignColorsToStreamsWithFallback(remainingStreams, 'income', false);
 
           return {
             ...state,
@@ -119,18 +97,7 @@ export const useSimpleStreamsStore = create<SimpleStreamsState>()(
 
           // Auto-assign color based on value rank
           const allStreams = [...view.expenses, stream];
-          const streamsWithColors = assignColorsToStreams(
-            allStreams.map(s => ({ amount: s.amount, id: s.id })),
-            'expense'
-          );
-          
-          // Map colors back to streams
-          // If there's only one stream, fallback to darkest color (rank 1), otherwise lightest (rank 0)
-          const fallbackColor = allStreams.length === 1 ? getExpenseColor(1) : getExpenseColor(0);
-          const updatedStreams = allStreams.map(s => {
-            const colorItem = streamsWithColors.find(c => c.id === s.id);
-            return { ...s, color: colorItem?.color || fallbackColor };
-          });
+          const updatedStreams = assignColorsToStreamsWithFallback(allStreams, 'expense', false);
 
           return {
             ...state,
@@ -152,18 +119,7 @@ export const useSimpleStreamsStore = create<SimpleStreamsState>()(
           const remainingStreams = view.expenses.filter(
             (st) => st.id !== streamId
           );
-          const streamsWithColors = assignColorsToStreams(
-            remainingStreams.map(s => ({ amount: s.amount, id: s.id })),
-            'expense'
-          );
-          
-          // Map colors back to streams
-          // If there's only one stream, fallback to darkest color (rank 1), otherwise lightest (rank 0)
-          const fallbackColor = remainingStreams.length === 1 ? getExpenseColor(1) : getExpenseColor(0);
-          const finalStreams = remainingStreams.map(s => {
-            const colorItem = streamsWithColors.find(c => c.id === s.id);
-            return { ...s, color: colorItem?.color || fallbackColor };
-          });
+          const finalStreams = assignColorsToStreamsWithFallback(remainingStreams, 'expense', false);
 
           return {
             ...state,
@@ -185,16 +141,7 @@ export const useSimpleStreamsStore = create<SimpleStreamsState>()(
           const updatedStreams = view.income.map((st) =>
             st.id === streamId ? stream : st
           );
-          const streamsWithColors = assignColorsToStreams(
-            updatedStreams.map(s => ({ amount: s.amount, id: s.id })),
-            'income'
-          );
-          
-          // Map colors back to streams
-          const finalStreams = updatedStreams.map(s => {
-            const colorItem = streamsWithColors.find(c => c.id === s.id);
-            return { ...s, color: colorItem?.color || s.color };
-          });
+          const finalStreams = assignColorsToStreamsWithFallback(updatedStreams, 'income', true);
 
           return {
             ...state,
@@ -216,16 +163,7 @@ export const useSimpleStreamsStore = create<SimpleStreamsState>()(
           const updatedStreams = view.expenses.map((st) =>
             st.id === streamId ? stream : st
           );
-          const streamsWithColors = assignColorsToStreams(
-            updatedStreams.map(s => ({ amount: s.amount, id: s.id })),
-            'expense'
-          );
-          
-          // Map colors back to streams
-          const finalStreams = updatedStreams.map(s => {
-            const colorItem = streamsWithColors.find(c => c.id === s.id);
-            return { ...s, color: colorItem?.color || s.color };
-          });
+          const finalStreams = assignColorsToStreamsWithFallback(updatedStreams, 'expense', true);
 
           return {
             ...state,

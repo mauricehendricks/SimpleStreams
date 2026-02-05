@@ -417,23 +417,7 @@ export default function DashboardScreen() {
           />
         )}
 
-        {activeTab === 'expense' && chartData.length > 0 && (
-          <StreamsList
-            activeTab={activeTab}
-            streams={currentStreams}
-            viewPeriod={viewPeriod}
-            taxAmount={taxAmount}
-            taxColor={taxColor}
-            incomeColorMap={incomeColorMap}
-            expenseColorMap={expenseColorMap}
-            getConvertedAmount={getConvertedAmount}
-            getStreamPercent={getStreamPercent}
-            onEdit={handleEditStream}
-            onDelete={handleDeleteStream}
-            onTaxPress={() => setShowTaxAllocationSheet(true)}
-          />
-        )}
-        {activeTab === 'income' && chartData.length > 0 && (
+        {activeTab !== 'net' && chartData.length > 0 && (
           <StreamsList
             activeTab={activeTab}
             streams={currentStreams}
