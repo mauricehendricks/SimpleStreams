@@ -18,7 +18,22 @@ export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const isPremium = usePremiumStore((state) => state.isPremium);
-  const setIsPremium = usePremiumStore((state) => state.setIsPremium);
+
+  const handlePremiumToggle = () => {
+    Alert.alert(
+      'Updates Coming Soon',
+      'Multiple view management and auto tax allocation will be available soon for purchase.',
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Toggle will automatically revert since isPremium is always false
+          },
+        },
+      ]
+    );
+    // Don't call setIsPremium - this ensures the toggle always stays off
+  };
 
   const handleResetData = () => {
     Alert.alert(
@@ -72,14 +87,14 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <View style={styles.settingRow}>
             <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Premium (Testing)</Text>
+              <Text style={styles.settingLabel}>Enable Premium Features</Text>
               <Text style={styles.settingDescription}>
-                Enable premium features for testing
+                Unlock multiple view management, and auto tax allocation coming soon.
               </Text>
             </View>
             <Switch
               value={isPremium}
-              onValueChange={setIsPremium}
+              onValueChange={handlePremiumToggle}
               trackColor={{ false: '#E0E0E0', true: '#1A3FBC' }}
               thumbColor="#FFFFFF"
             />
@@ -94,7 +109,7 @@ export default function SettingsScreen() {
             <Text style={styles.resetButtonText}>Reset Data</Text>
           </TouchableOpacity>
           <Text style={styles.resetDescription}>
-            This will delete all dashboard views and cash flow streams. Premium status will not be affected.
+            This will delete all dashboard views and cash flow streams.
           </Text>
         </View>
       </ScrollView>
