@@ -316,7 +316,7 @@ export const useSimpleStreamsStore = create<SimpleStreamsState>()(
     {
       name: APP_STORAGE_KEY,
       storage: createJSONStorage(() => AsyncStorage),
-      version: 3, // Match CURRENT_SCHEMA_VERSION
+      version: 1, // Match CURRENT_SCHEMA_VERSION
       skipHydration: true, // We handle hydration manually via useHydrationGate
       migrate: (persistedState: any, version: number) => {
         // Zustand persist handles versioning, but we also run our migration

@@ -11,7 +11,7 @@ export function createDefaultState(): AppState {
   };
 
   return {
-    schemaVersion: 3,
+    schemaVersion: 1,
     views: [defaultView],
     activeViewId: 'view-1',
   };

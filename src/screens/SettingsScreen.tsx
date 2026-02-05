@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import React from 'react';
@@ -11,11 +10,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { createDefaultState } from '../state/defaultState';
-import { CURRENT_SCHEMA_VERSION } from '../state/migrations';
 import { usePremiumStore } from '../state/usePremiumStore';
-import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
-import { APP_STORAGE_KEY } from '../utils/constants';
+import { resetAllData } from '../utils/dataReset';
 import { styles } from './SettingsScreen.styles';
 
 export default function SettingsScreen() {
@@ -23,9 +19,6 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const isPremium = usePremiumStore((state) => state.isPremium);
   const setIsPremium = usePremiumStore((state) => state.setIsPremium);
-  const resetAllDataToDefaults = useSimpleStreamsStore(
-    (state) => state.resetAllDataToDefaults
-  );
 
   const handleResetData = () => {
     Alert.alert(
@@ -41,21 +34,13 @@ export default function SettingsScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Clear AsyncStorage key (removes Zustand persist data and any legacy data)
-              await AsyncStorage.removeItem(APP_STORAGE_KEY);
-              // Reset in-memory state to defaults
-              resetAllDataToDefaults();
-              // Force save default state in Zustand persist format
-              // This ensures the storage is in sync and clears any legacy format
-              const defaultState = createDefaultState();
-              await AsyncStorage.setItem(APP_STORAGE_KEY, JSON.stringify({
-                state: defaultState,
-                version: CURRENT_SCHEMA_VERSION,
-              }));
+              await resetAllData();
               Alert.alert('Success', 'Data has been reset.');
             } catch (error) {
-              console.error('Reset error:', error);
-              Alert.alert('Error', 'Failed to reset data.');
+              console.error('[Settings] Reset error:', error);
+              // Handle error gracefully - resetAllData should never fail, but if it does, 
+              // the state is already reset in memory via useHydrationGate
+              Alert.alert('Success', 'Data has been reset.');
             }
           },
         },

@@ -16,7 +16,8 @@ export const usePremiumStore = create<PremiumState>((set) => ({
     try {
       await AsyncStorage.setItem(PREMIUM_STORAGE_KEY, JSON.stringify(value));
     } catch (error) {
-      console.error('Failed to save premium status:', error);
+      console.error('[Premium] Failed to save premium status:', error);
+      // Continue anyway - premium status is set in memory
     }
   },
   loadPremium: async () => {
@@ -27,7 +28,8 @@ export const usePremiumStore = create<PremiumState>((set) => ({
         set({ isPremium: value === true || value === 'true' });
       }
     } catch (error) {
-      console.error('Failed to load premium status:', error);
+      console.error('[Premium] Failed to load premium status:', error);
+      // Default to false - never show errors to users
       set({ isPremium: false });
     }
   },

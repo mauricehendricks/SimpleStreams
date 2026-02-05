@@ -5,7 +5,6 @@
 // Primary colors
 const PRIMARY_BLUE = '#1A3FBC';
 const PRIMARY_RED = '#EF5350';
-const TAX_COLOR = '#8E8E93';
 
 // Lightest colors (almost white with tint)
 const LIGHTEST_BLUE = '#E3F2FD';
@@ -53,13 +52,6 @@ export function getIncomeColor(rank: number): string {
 export function getExpenseColor(rank: number): string {
   // Largest values (rank = 1) get darkest color, smallest (rank = 0) get lightest
   return interpolateColor(LIGHTEST_RED, PRIMARY_RED, rank);
-}
-
-/**
- * Get tax color (always grey)
- */
-export function getTaxColor(): string {
-  return TAX_COLOR;
 }
 
 /**

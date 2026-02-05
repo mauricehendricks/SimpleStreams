@@ -5,6 +5,7 @@ import { CURRENT_SCHEMA_VERSION, migrateState } from '../state/migrations';
 import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
 import { APP_STORAGE_KEY } from '../utils/constants';
+import { resetAllData } from '../utils/dataReset';
 
 const HYDRATION_TIMEOUT = 5000; // 5 seconds (increased for slower devices)
 
@@ -29,11 +30,12 @@ export function useHydrationGate() {
         try {
           stored = await AsyncStorage.getItem(APP_STORAGE_KEY);
         } catch (storageError) {
-          console.error('AsyncStorage.getItem failed:', storageError);
+          // Storage unavailable - keep current in-memory state (default on first launch)
+          console.error('[Hydration] AsyncStorage.getItem failed:', storageError);
           if (mounted) {
             hydrationCompletedRef.current = true;
             clearTimeout(timeoutId);
-            setStatus('error');
+            setStatus('ready');
           }
           return;
         }
@@ -41,15 +43,16 @@ export function useHydrationGate() {
         if (!mounted) return;
 
         if (stored === null) {
-          // No stored data - use defaults and save to storage
+          // No stored data - use defaults
           const defaultState = createDefaultState();
           useSimpleStreamsStore.setState(defaultState);
-          // Save default state to AsyncStorage
           try {
-            await AsyncStorage.setItem(APP_STORAGE_KEY, JSON.stringify(defaultState));
+            await AsyncStorage.setItem(APP_STORAGE_KEY, JSON.stringify({
+              state: defaultState,
+              version: CURRENT_SCHEMA_VERSION,
+            }));
           } catch (saveError) {
-            console.error('Failed to save default state:', saveError);
-            // Continue anyway - state is set in memory
+            console.error('[Hydration] Failed to save default state:', saveError);
           }
           if (mounted) {
             hydrationCompletedRef.current = true;
@@ -64,15 +67,15 @@ export function useHydrationGate() {
         try {
           parsed = JSON.parse(stored);
         } catch (parseError) {
-          console.error('JSON parse error:', parseError);
-          console.error('Stored data:', stored?.substring(0, 200));
-          // Try to recover with default state
+          // Corrupted data - reset to default and clear storage
+          console.error('[Hydration] JSON parse error:', parseError);
+          console.error('[Hydration] Stored data (first 200 chars):', stored?.substring(0, 200));
           const defaultState = createDefaultState();
           useSimpleStreamsStore.setState(defaultState);
           try {
-            await AsyncStorage.setItem(APP_STORAGE_KEY, JSON.stringify(defaultState));
-          } catch (saveError) {
-            console.error('Failed to save recovered state:', saveError);
+            await AsyncStorage.removeItem(APP_STORAGE_KEY);
+          } catch (removeError) {
+            // Ignore
           }
           if (mounted) {
             hydrationCompletedRef.current = true;
@@ -82,15 +85,12 @@ export function useHydrationGate() {
           return;
         }
 
-        // Zustand persist stores `{ state, version }` in AsyncStorage. Unwrap if needed.
+        // Unwrap Zustand persist format if needed
         const candidate = parsed && typeof parsed === 'object' && 'state' in parsed ? parsed.state : parsed;
-
-        // Migrate state (always returns valid state, creates default if needed)
         const migrated = migrateState(candidate);
 
         if (!mounted) return;
 
-        // Set migrated state (Zustand persist will handle saving on next state change)
         useSimpleStreamsStore.setState(migrated);
         if (mounted) {
           hydrationCompletedRef.current = true;
@@ -98,28 +98,22 @@ export function useHydrationGate() {
           setStatus('ready');
         }
       } catch (error) {
-        console.error('Unexpected hydration error:', error);
-        // Try to recover with default state
-        try {
-          const defaultState = createDefaultState();
-          useSimpleStreamsStore.setState(defaultState);
-          await AsyncStorage.setItem(APP_STORAGE_KEY, JSON.stringify(defaultState));
-        } catch (recoveryError) {
-          console.error('Recovery also failed:', recoveryError);
-        }
+        // Unexpected error - keep current in-memory state (default on first launch)
+        console.error('[Hydration] Unexpected hydration error:', error);
         if (mounted) {
           hydrationCompletedRef.current = true;
           clearTimeout(timeoutId);
-          setStatus('error');
+          setStatus('ready');
         }
       }
     };
 
-    // Set timeout
+    // Timeout fallback - keep current in-memory state
     timeoutId = setTimeout(() => {
       if (mounted && !hydrationCompletedRef.current) {
+        console.warn('[Hydration] Hydration timeout - using current in-memory state');
         hydrationCompletedRef.current = true;
-        setStatus('error');
+        setStatus('ready');
       }
     }, HYDRATION_TIMEOUT);
 
@@ -140,8 +134,10 @@ export function useHydrationGate() {
       if (stored === null) {
         const defaultState = createDefaultState();
         useSimpleStreamsStore.setState(defaultState);
-        // Save default state to AsyncStorage
-        await AsyncStorage.setItem(APP_STORAGE_KEY, JSON.stringify(defaultState));
+        await AsyncStorage.setItem(APP_STORAGE_KEY, JSON.stringify({
+          state: defaultState,
+          version: CURRENT_SCHEMA_VERSION,
+        }));
         hydrationCompletedRef.current = true;
         setStatus('ready');
         return;
@@ -154,29 +150,21 @@ export function useHydrationGate() {
       hydrationCompletedRef.current = true;
       setStatus('ready');
     } catch (error) {
-      console.error('Retry error:', error);
+      // Retry failed - keep current in-memory state
+      console.error('[Hydration] Retry error:', error);
       hydrationCompletedRef.current = true;
-      setStatus('error');
+      setStatus('ready');
     }
   };
 
   const resetData = async () => {
     try {
-      // Clear AsyncStorage key (removes Zustand persist data and any legacy data)
-      await AsyncStorage.removeItem(APP_STORAGE_KEY);
-      // Reset in-memory state to defaults
-      useSimpleStreamsStore.getState().resetAllDataToDefaults();
-      // Force save default state in Zustand persist format
-      // This ensures the storage is in sync and clears any legacy format
-      const defaultState = createDefaultState();
-      await AsyncStorage.setItem(APP_STORAGE_KEY, JSON.stringify({
-        state: defaultState,
-        version: CURRENT_SCHEMA_VERSION,
-      }));
+      await resetAllData();
       setStatus('ready');
     } catch (error) {
-      console.error('Reset error:', error);
-      setStatus('error');
+      // Reset failed - keep current in-memory state
+      console.error('[Hydration] Reset error:', error);
+      setStatus('ready');
     }
   };
 

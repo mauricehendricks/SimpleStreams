@@ -34,7 +34,7 @@ export function getViewPeriodLabel(viewPeriod: ViewPeriod): string {
     case 'weekly':
       return 'Week';
     case 'semimonthly':
-      return 'Semi-month';
+      return 'Semi-monthly';
     case 'yearly':
       return 'Year';
   }

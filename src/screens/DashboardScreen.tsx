@@ -2,7 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Settings } from 'lucide-react-native';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DashboardSkeleton } from '../components/DashboardSkeleton';
@@ -75,9 +75,10 @@ export default function DashboardScreen() {
   }, [viewPeriod, editingStreamId]);
 
   // Get converted amount for a stream based on current view period
-  const getConvertedAmount = (stream: Stream): number => {
+  // Memoized to prevent unnecessary recalculations in useMemo hooks
+  const getConvertedAmount = useCallback((stream: Stream): number => {
     return convertAmount(stream.amount, stream.viewPeriod, viewPeriod);
-  };
+  }, [viewPeriod]);
 
   // Add or update stream
   const handleAddStream = () => {

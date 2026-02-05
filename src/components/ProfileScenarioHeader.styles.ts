@@ -17,10 +17,6 @@ export const styles = StyleSheet.create({
   textTruncate: {
     maxWidth: 140,
   },
-  separator: {
-    fontSize: 20,
-    color: '#8E8E93',
-  },
   touchable: {
     flexDirection: 'row',
     alignItems: 'center',

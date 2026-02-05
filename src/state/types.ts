@@ -17,7 +17,7 @@ export type View = {
 };
 
 export type AppState = {
-  schemaVersion: number; // 3
+  schemaVersion: number; // 1
   views: View[];
   activeViewId: string;
 };
