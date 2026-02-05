@@ -8,11 +8,9 @@ import {
   View,
 } from 'react-native';
 import { DrawerModal } from '../components/DrawerModal';
-import { ViewPeriod } from '../state/types';
+import { TabType, ViewPeriod } from '../state/types';
 import { getViewPeriodLabel } from '../utils/periodConversion';
 import { styles } from './AddStreamModal.styles';
-
-type TabType = 'income' | 'expense' | 'net';
 
 interface AddStreamModalProps {
   visible: boolean;

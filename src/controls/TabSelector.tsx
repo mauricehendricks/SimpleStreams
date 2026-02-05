@@ -1,8 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { TabType } from '../state/types';
 import { styles } from './TabSelector.styles';
-
-type TabType = 'income' | 'expense' | 'net';
 
 interface TabSelectorProps {
   activeTab: TabType;

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Modal, Text, TouchableOpacity, View } from 'react-native';
+import { TabType } from '../state/types';
 import { styles } from './DeleteDialog.styles';
-
-type TabType = 'income' | 'expense' | 'net';
 
 interface DeleteDialogProps {
   visible: boolean;

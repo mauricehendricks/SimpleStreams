@@ -1,11 +1,9 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
-import { Stream } from '../state/types';
+import { Stream, TabType } from '../state/types';
 import { formatChartCurrency, formatPercent, getDigitCount } from '../utils/format';
 import { styles } from './ChartCard.styles';
-
-type TabType = 'income' | 'expense' | 'net';
 
 interface ChartCardProps {
   activeTab: TabType;

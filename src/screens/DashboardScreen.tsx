@@ -19,7 +19,7 @@ import { StreamsList } from '../controls/StreamsList';
 import { TabSelector } from '../controls/TabSelector';
 import { useHydrationGate } from '../hooks/useHydrationGate';
 import { useViewComputed } from '../hooks/useViewComputed';
-import { Stream, ViewPeriod } from '../state/types';
+import { Stream, TabType, ViewPeriod } from '../state/types';
 import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
 import {
@@ -30,8 +30,6 @@ import {
 } from '../utils/colorAssignment';
 import { convertAmount } from '../utils/periodConversion';
 import { styles } from './DashboardScreen.styles';
-
-type TabType = 'income' | 'expense' | 'net';
 
 export default function DashboardScreen() {
   const router = useRouter();

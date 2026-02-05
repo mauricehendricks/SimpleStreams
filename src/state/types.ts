@@ -1,5 +1,7 @@
 export type ViewPeriod = "weekly" | "semimonthly" | "monthly" | "yearly";
 
+export type TabType = 'income' | 'expense' | 'net';
+
 export type Stream = {
   id: string;
   name: string;

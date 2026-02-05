@@ -3,14 +3,12 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { StreamRow } from '../components/StreamRow';
 import { streamRowStyles } from '../components/StreamRow.styles';
-import { Stream, ViewPeriod } from '../state/types';
+import { Stream, TabType, ViewPeriod } from '../state/types';
 import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
 import { formatCurrency, formatPercent } from '../utils/format';
 import { getViewPeriodLabel } from '../utils/periodConversion';
 import { styles } from './StreamsList.styles';
-
-type TabType = 'income' | 'expense' | 'net';
 
 interface StreamsListProps {
   activeTab: TabType;
