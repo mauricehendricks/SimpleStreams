@@ -4,12 +4,12 @@ import React from 'react';
 import {
   Alert,
   ScrollView,
-  Switch,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { PremiumRow } from '../controls/PremiumRow';
 import { usePremiumStore } from '../state/usePremiumStore';
 import { resetAllData } from '../utils/dataReset';
 import { styles } from './SettingsScreen.styles';
@@ -19,10 +19,10 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const isPremium = usePremiumStore((state) => state.isPremium);
 
-  const handlePremiumToggle = () => {
+  const handlePremiumToggle = (_value: boolean) => {
     Alert.alert(
       'Updates Coming Soon',
-      'Multiple view management and auto tax allocation will be available soon for purchase.',
+      'Multiple views and auto tax allocation will be available soon for purchase.',
       [
         {
           text: 'OK',
@@ -85,20 +85,12 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <View style={styles.settingRow}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>Enable Premium Features</Text>
-              <Text style={styles.settingDescription}>
-                Unlock multiple view management, and auto tax allocation coming soon.
-              </Text>
-            </View>
-            <Switch
-              value={isPremium}
-              onValueChange={handlePremiumToggle}
-              trackColor={{ false: '#E0E0E0', true: '#1A3FBC' }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
+          <PremiumRow
+            label="Enable Premium Features"
+            description="Unlock multiple view management, and auto tax allocation coming soon."
+            value={isPremium}
+            onValueChange={handlePremiumToggle}
+          />
         </View>
 
         <View style={styles.section}>

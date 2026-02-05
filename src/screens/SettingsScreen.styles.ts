@@ -54,25 +54,6 @@ export const styles = StyleSheet.create({
       },
     }),
   },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  settingInfo: {
-    flex: 1,
-    marginRight: 16,
-  },
-  settingLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#101A3A',
-    marginBottom: 4,
-  },
-  settingDescription: {
-    fontSize: 14,
-    color: '#8E8E93',
-  },
   resetButton: {
     backgroundColor: '#EF5350',
     borderRadius: 16,
