@@ -4,7 +4,6 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import { StreamRow } from '../components/StreamRow';
 import { streamRowStyles } from '../components/StreamRow.styles';
 import { Stream, TabType, ViewPeriod } from '../state/types';
-import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
 import { formatCurrency, formatPercent } from '../utils/format';
 import { getViewPeriodLabel } from '../utils/periodConversion';
@@ -43,11 +42,10 @@ export function StreamsList({
     return null;
   }
 
-  const isPremium = usePremiumStore((state) => state.isPremium);
   const view = useSimpleStreamsStore((state) => state.getActiveView());
   const taxAllocationRate = view?.taxAllocationRate ?? 30;
 
-  // Create a list that includes streams and taxes (for expenses, premium only)
+  // Create a list that includes streams and taxes (for expenses)
   // Sort from largest to smallest for UI display
   const allItems: Array<{
     id: string;
@@ -80,8 +78,8 @@ export function StreamsList({
     });
   });
 
-  // Add taxes as a virtual item for expenses (premium only)
-  if (activeTab === 'expense' && isPremium) {
+  // Add taxes as a virtual item for expenses
+  if (activeTab === 'expense') {
     allItems.push({
       id: 'taxes',
       name: 'Taxes',

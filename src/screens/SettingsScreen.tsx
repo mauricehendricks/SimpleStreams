@@ -9,31 +9,12 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { PremiumRow } from '../controls/PremiumRow';
-import { usePremiumStore } from '../state/usePremiumStore';
 import { resetAllData } from '../utils/dataReset';
 import { styles } from './SettingsScreen.styles';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const isPremium = usePremiumStore((state) => state.isPremium);
-
-  const handlePremiumToggle = (_value: boolean) => {
-    Alert.alert(
-      'Updates Coming Soon',
-      'Multiple views and auto tax allocation will be available soon for purchase.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            // Toggle will automatically revert since isPremium is always false
-          },
-        },
-      ]
-    );
-    // Don't call setIsPremium - this ensures the toggle always stays off
-  };
 
   const handleResetData = () => {
     Alert.alert(
@@ -84,15 +65,6 @@ export default function SettingsScreen() {
             <ArrowLeft size={20} color="#101A3A" />
           </TouchableOpacity>
           <Text style={styles.title}>Settings</Text>
-        </View>
-
-        <View style={styles.section}>
-          <PremiumRow
-            label="Enable Premium Features"
-            description="Unlock multiple view management, and auto tax allocation coming soon."
-            value={isPremium}
-            onValueChange={handlePremiumToggle}
-          />
         </View>
 
         <View style={styles.section}>

@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PREMIUM_STORAGE_KEY } from '../utils/constants';
 import { createDefaultState } from './defaultState';
 import { AppState } from './types';
 
@@ -8,6 +10,11 @@ export const CURRENT_SCHEMA_VERSION = 1;
  * Returns valid AppState or default if unrecoverable.
  */
 export function migrateState(raw: any): AppState {
+  // Clean up premium storage key (no longer needed)
+  AsyncStorage.removeItem(PREMIUM_STORAGE_KEY).catch(() => {
+    // Ignore errors - key may not exist
+  });
+
   if (!raw || typeof raw !== 'object') {
     console.warn('[Migration] Raw state is not an object. Using default state.');
     return createDefaultState();

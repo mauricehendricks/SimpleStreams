@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState } from 'react';
 import { createDefaultState } from '../state/defaultState';
 import { CURRENT_SCHEMA_VERSION, migrateState } from '../state/migrations';
-import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
 import { APP_STORAGE_KEY } from '../utils/constants';
 import { resetAllData } from '../utils/dataReset';
@@ -65,7 +64,6 @@ async function hydrateFromStoredData(stored: string | null): Promise<boolean> {
 
 export function useHydrationGate() {
   const [status, setStatus] = useState<HydrationStatus>('loading');
-  const premiumStore = usePremiumStore();
   const hydrationCompletedRef = useRef(false);
 
   useEffect(() => {
@@ -78,9 +76,6 @@ export function useHydrationGate() {
         if (SIMULATE_SLOW_LOADING) {
           await new Promise(resolve => setTimeout(resolve, SLOW_LOADING_DELAY));
         }
-
-        // Load premium status (can happen in parallel)
-        await premiumStore.loadPremium();
 
         // Load app data
         let stored: string | null;

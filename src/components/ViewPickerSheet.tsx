@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
 import { DrawerModal } from './DrawerModal';
 import { styles } from './ViewPickerSheet.styles';
@@ -32,7 +31,6 @@ export function ViewPickerSheet({
   const addView = useSimpleStreamsStore((state) => state.addView);
   const updateView = useSimpleStreamsStore((state) => state.updateView);
   const deleteView = useSimpleStreamsStore((state) => state.deleteView);
-  const isPremium = usePremiumStore((state) => state.isPremium);
 
   const handleSelectView = (viewId: string) => {
     setActiveView(viewId);
@@ -104,7 +102,7 @@ export function ViewPickerSheet({
                 const isEditing = editingViewId === view.id;
                 const canDelete = views.length > 1;
 
-                if (isEditing && isPremium) {
+                if (isEditing) {
                   return (
                     <View key={view.id} style={styles.item}>
                       <TextInput
@@ -150,8 +148,7 @@ export function ViewPickerSheet({
                         <Check size={20} color="#1A3FBC" />
                       )}
                     </TouchableOpacity>
-                    {isPremium && (
-                      <View style={styles.itemActions}>
+                    <View style={styles.itemActions}>
                         <TouchableOpacity
                           style={styles.itemActionButton}
                           onPress={() => handleEditView(view.id, view.name)}
@@ -176,13 +173,10 @@ export function ViewPickerSheet({
                           />
                         </TouchableOpacity>
                       </View>
-                    )}
-                  </View>
+                    </View>
                 );
               })}
-              {isPremium && (
-                <>
-                  {!showAddInput ? (
+              {!showAddInput ? (
                     <TouchableOpacity
                       style={styles.addButton}
                       onPress={() => setShowAddInput(true)}
@@ -219,8 +213,6 @@ export function ViewPickerSheet({
                       </View>
                     </View>
                   )}
-                </>
-              )}
       </ScrollView>
     </DrawerModal>
   );

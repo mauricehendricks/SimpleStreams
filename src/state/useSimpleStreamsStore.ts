@@ -6,7 +6,6 @@ import { APP_STORAGE_KEY } from '../utils/constants';
 import { createDefaultState } from './defaultState';
 import { migrateState } from './migrations';
 import { AppState, Stream, View } from './types';
-import { usePremiumStore } from './usePremiumStore';
 
 interface SimpleStreamsState extends AppState {
   // Actions
@@ -194,11 +193,6 @@ export const useSimpleStreamsStore = create<SimpleStreamsState>()(
       },
 
       addView: (name: string) => {
-        const isPremium = usePremiumStore.getState().isPremium;
-        if (!isPremium && get().views.length >= 1) {
-          // Premium gate: only allow 1 view in free tier
-          return;
-        }
 
         const newView: View = {
           id: `view-${Date.now()}`,
