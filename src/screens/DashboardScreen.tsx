@@ -1,94 +1,79 @@
-import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { Settings } from 'lucide-react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DashboardSkeleton } from '../components/DashboardSkeleton';
+import { HydrationErrorState } from '../components/HydrationErrorState';
+import { ProfileScenarioHeader } from '../components/ProfileScenarioHeader';
+import { TaxAllocationSheet } from '../components/TaxAllocationSheet';
+import { AddStreamModal } from '../controls/AddStreamModal';
+import { ChartCard } from '../controls/ChartCard';
+import { DeleteDialog } from '../controls/DeleteDialog';
+import { FloatingAddButton } from '../controls/FloatingAddButton';
+import { NetMarginSummary } from '../controls/NetMarginSummary';
+import { PeriodSelector } from '../controls/PeriodSelector';
+import { StreamsList } from '../controls/StreamsList';
+import { TabSelector } from '../controls/TabSelector';
+import { useHydrationGate } from '../hooks/useHydrationGate';
+import { useViewComputed } from '../hooks/useViewComputed';
+import { Stream, TabType, ViewPeriod } from '../state/types';
+import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
 import {
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import { PieChart } from 'react-native-gifted-charts';
-import { formatCurrency, formatPercent } from '../utils/format';
+  assignColorsToStreams,
+  getCashFlowExpenseColor,
+  getCashFlowIncomeColor,
+} from '../utils/colorAssignment';
+import { convertAmount } from '../utils/periodConversion';
 import { styles } from './DashboardScreen.styles';
 
-type PeriodType = 'monthly' | 'weekly' | 'biweekly' | 'yearly';
-
-type Stream = {
-  id: string;
-  name: string;
-  amount: number; // Amount in the original period
-  period: PeriodType; // Original period when added
-  color: string;
-};
-
-type TabType = 'income' | 'expense' | 'net';
-
-// Period conversion factors (payments per year)
-const PERIOD_FACTORS: Record<PeriodType, number> = {
-  monthly: 12,
-  weekly: 52,
-  biweekly: 24,
-  yearly: 1,
-};
-
-// iPhone calendar-like color palette
-const COLOR_PALETTE = [
-  '#FF3B30', // Red
-  '#FF9500', // Orange
-  '#FFCC00', // Yellow
-  '#34C759', // Green
-  '#00C7BE', // Teal
-  '#007AFF', // Blue
-  '#5856D6', // Indigo
-  '#AF52DE', // Purple
-  '#FF2D55', // Pink
-  '#8E8E93', // Gray
-];
-
 export default function DashboardScreen() {
+  const router = useRouter();
+  const { status, retry, resetData } = useHydrationGate();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabType>('income');
-  const [viewPeriod, setViewPeriod] = useState<PeriodType>('monthly');
-  const [incomeStreams, setIncomeStreams] = useState<Stream[]>([]);
-  const [expenseStreams, setExpenseStreams] = useState<Stream[]>([]);
+  const [viewPeriod, setViewPeriod] = useState<ViewPeriod>('monthly');
   const [newStreamName, setNewStreamName] = useState('');
   const [newStreamAmount, setNewStreamAmount] = useState('');
-  const [newStreamPeriod, setNewStreamPeriod] = useState<PeriodType>('monthly');
-  const [newStreamColor, setNewStreamColor] = useState<string>(COLOR_PALETTE[0]);
+  const [newStreamPeriod, setNewStreamPeriod] = useState<ViewPeriod>('monthly');
   const [editingStreamId, setEditingStreamId] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isColorPickerVisible, setIsColorPickerVisible] = useState(false);
   const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
   const [streamToDelete, setStreamToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [showTaxAllocationSheet, setShowTaxAllocationSheet] = useState(false);
 
-  // Convert amount from one period to another
-  const convertAmount = (amount: number, fromPeriod: PeriodType, toPeriod: PeriodType): number => {
-    if (fromPeriod === toPeriod) return amount;
-    const fromFactor = PERIOD_FACTORS[fromPeriod];
-    const toFactor = PERIOD_FACTORS[toPeriod];
-    // Convert to yearly first, then to target period
-    const yearlyAmount = amount * fromFactor;
-    return yearlyAmount / toFactor;
-  };
+  const view = useSimpleStreamsStore((state) => state.getActiveView());
+  const incomeStreams = view?.income || [];
+  const expenseStreams = view?.expenses || [];
+  const addIncomeStream = useSimpleStreamsStore((state) => state.addIncomeStream);
+  const deleteIncomeStream = useSimpleStreamsStore((state) => state.deleteIncomeStream);
+  const updateIncomeStream = useSimpleStreamsStore((state) => state.updateIncomeStream);
+  const addExpenseStream = useSimpleStreamsStore((state) => state.addExpenseStream);
+  const deleteExpenseStream = useSimpleStreamsStore((state) => state.deleteExpenseStream);
+  const updateExpenseStream = useSimpleStreamsStore((state) => state.updateExpenseStream);
+
+  const {
+    incomeTotal,
+    taxAmount,
+    expenseTotalWithTax,
+    netTotal,
+    netMarginPercent,
+  } = useViewComputed(viewPeriod);
+
+  // Update newStreamPeriod when viewPeriod changes (for new streams)
+  useEffect(() => {
+    if (!editingStreamId) {
+      setNewStreamPeriod(viewPeriod);
+    }
+  }, [viewPeriod, editingStreamId]);
 
   // Get converted amount for a stream based on current view period
-  const getConvertedAmount = (stream: Stream): number => {
-    return convertAmount(stream.amount, stream.period, viewPeriod);
-  };
-
-  // Calculate totals (converted to view period)
-  const incomeTotal = useMemo(
-    () => incomeStreams.reduce((sum, stream) => sum + getConvertedAmount(stream), 0),
-    [incomeStreams, viewPeriod]
-  );
-  const expenseTotal = useMemo(
-    () => expenseStreams.reduce((sum, stream) => sum + getConvertedAmount(stream), 0),
-    [expenseStreams, viewPeriod]
-  );
-  const netTotal = incomeTotal - expenseTotal;
-  const netMarginPercent = incomeTotal > 0 ? (netTotal / incomeTotal) * 100 : 0;
+  // Memoized to prevent unnecessary recalculations in useMemo hooks
+  const getConvertedAmount = useCallback((stream: Stream): number => {
+    return convertAmount(stream.amount, stream.viewPeriod, viewPeriod);
+  }, [viewPeriod]);
 
   // Add or update stream
   const handleAddStream = () => {
@@ -97,40 +82,28 @@ export default function DashboardScreen() {
       return;
     }
 
+    // Color will be auto-assigned by the store based on value rank
+    const stream: Stream = {
+      id: editingStreamId || Date.now().toString(),
+      name: newStreamName.trim(),
+      amount,
+      viewPeriod: newStreamPeriod,
+      color: '#1A3FBC', // Temporary, will be reassigned by store
+    };
+
     if (editingStreamId) {
       // Update existing stream
-      const updateStream = (streams: Stream[]) =>
-        streams.map((s) =>
-          s.id === editingStreamId
-            ? {
-                ...s,
-                name: newStreamName.trim(),
-                amount,
-                period: newStreamPeriod,
-                color: newStreamColor,
-              }
-            : s
-        );
-
       if (activeTab === 'income') {
-        setIncomeStreams(updateStream(incomeStreams));
+        updateIncomeStream(editingStreamId, stream);
       } else {
-        setExpenseStreams(updateStream(expenseStreams));
+        updateExpenseStream(editingStreamId, stream);
       }
     } else {
       // Add new stream
-      const newStream: Stream = {
-        id: Date.now().toString(),
-        name: newStreamName.trim(),
-        amount,
-        period: newStreamPeriod,
-        color: newStreamColor,
-      };
-
       if (activeTab === 'income') {
-        setIncomeStreams([...incomeStreams, newStream]);
+        addIncomeStream(stream);
       } else {
-        setExpenseStreams([...expenseStreams, newStream]);
+        addExpenseStream(stream);
       }
     }
 
@@ -142,8 +115,7 @@ export default function DashboardScreen() {
     setEditingStreamId(null);
     setNewStreamName('');
     setNewStreamAmount('');
-    setNewStreamPeriod('monthly');
-    setNewStreamColor(COLOR_PALETTE[0]);
+    setNewStreamPeriod(viewPeriod);
     setIsModalVisible(true);
   };
 
@@ -152,8 +124,7 @@ export default function DashboardScreen() {
     setEditingStreamId(stream.id);
     setNewStreamName(stream.name);
     setNewStreamAmount(stream.amount.toString());
-    setNewStreamPeriod(stream.period);
-    setNewStreamColor(stream.color);
+    setNewStreamPeriod(stream.viewPeriod);
     setIsModalVisible(true);
   };
 
@@ -163,9 +134,7 @@ export default function DashboardScreen() {
     setEditingStreamId(null);
     setNewStreamName('');
     setNewStreamAmount('');
-    setNewStreamPeriod('monthly');
-    setNewStreamColor(COLOR_PALETTE[0]);
-    setIsColorPickerVisible(false);
+    setNewStreamPeriod(viewPeriod);
   };
 
   // Show delete confirmation dialog
@@ -179,9 +148,9 @@ export default function DashboardScreen() {
     if (!streamToDelete) return;
 
     if (activeTab === 'income') {
-      setIncomeStreams(incomeStreams.filter((s) => s.id !== streamToDelete.id));
+      deleteIncomeStream(streamToDelete.id);
     } else {
-      setExpenseStreams(expenseStreams.filter((s) => s.id !== streamToDelete.id));
+      deleteExpenseStream(streamToDelete.id);
     }
 
     setIsDeleteDialogVisible(false);
@@ -194,6 +163,95 @@ export default function DashboardScreen() {
     setStreamToDelete(null);
   };
 
+  // Single source of truth: Calculate all stream colors based on converted amounts
+  // This ensures chart data and stream list use the same colors and ranking
+  const incomeColorMap = useMemo((): Map<string, string> => {
+    const colorMap = new Map<string, string>();
+    
+    if (activeTab !== 'income') {
+      return colorMap;
+    }
+    
+    const streamsWithAmounts = incomeStreams
+      .map((stream) => ({
+        stream,
+        convertedAmount: getConvertedAmount(stream),
+      }))
+      .filter((item) => item.convertedAmount > 0);
+    
+    if (streamsWithAmounts.length === 0) {
+      return colorMap;
+    }
+    
+    // Use assignColorsToStreams to calculate colors based on converted amounts
+    const itemsWithColors = assignColorsToStreams(
+      streamsWithAmounts.map(item => ({ 
+        amount: item.convertedAmount, 
+        id: item.stream.id 
+      })),
+      'income'
+    );
+    
+    // Map colors back to stream IDs
+    itemsWithColors.forEach(item => {
+      if (item.id) {
+        colorMap.set(item.id, item.color);
+      }
+    });
+    
+    return colorMap;
+  }, [activeTab, incomeStreams, viewPeriod, getConvertedAmount]);
+
+  // Calculate expense stream colors and tax color together based on converted amounts
+  // This ensures all colors are calculated from the same set of values
+  const expenseColorMap = useMemo((): Map<string, string> & { taxColor?: string } => {
+    const colorMap = new Map<string, string>() as Map<string, string> & { taxColor?: string };
+    
+    if (activeTab !== 'expense') {
+      return colorMap;
+    }
+    
+    const streamsWithAmounts = expenseStreams
+      .map((stream) => ({
+        stream,
+        convertedAmount: getConvertedAmount(stream),
+      }))
+      .filter((item) => item.convertedAmount > 0);
+    
+    // If no expenses, use primary red for tax
+    if (streamsWithAmounts.length === 0) {
+      colorMap.taxColor = getCashFlowExpenseColor();
+      return colorMap;
+    }
+    
+    // Calculate colors for all expenses + tax together based on converted amounts
+    // This ensures tax gets the correct rank among all expenses
+    // Only include tax in ranking if taxAmount > 0
+    const allExpenseItems = [
+      ...streamsWithAmounts.map(item => ({ amount: item.convertedAmount, id: item.stream.id, isTax: false })),
+      ...(taxAmount > 0 ? [{ amount: taxAmount, id: 'tax', isTax: true }] : [])
+    ];
+    
+    // Use assignColorsToStreams to calculate colors based on converted amounts
+    const itemsWithColors = assignColorsToStreams(
+      allExpenseItems.map(item => ({ amount: item.amount, id: item.id })),
+      'expense'
+    );
+    
+    // Map colors back to stream IDs and tax
+    itemsWithColors.forEach(item => {
+      if (item.id === 'tax') {
+        colorMap.taxColor = item.color;
+      } else if (item.id) {
+        colorMap.set(item.id, item.color);
+      }
+    });
+    
+    return colorMap;
+  }, [activeTab, expenseStreams, viewPeriod, taxAmount, getConvertedAmount]);
+  
+  const taxColor = expenseColorMap.taxColor || getCashFlowExpenseColor();
+
   // Prepare chart data (using converted amounts, sorted by value ascending - least to most)
   const chartData = useMemo((): Array<{
     value: number;
@@ -202,439 +260,206 @@ export default function DashboardScreen() {
     stream?: Stream;
   }> => {
     if (activeTab === 'income') {
-      return incomeStreams
+      const streamsWithAmounts = incomeStreams
         .map((stream) => ({
           stream,
           convertedAmount: getConvertedAmount(stream),
         }))
         .filter((item) => item.convertedAmount > 0)
-        .sort((a, b) => a.convertedAmount - b.convertedAmount) // Sort ascending (least to most)
-        .map((item) => ({
+        .sort((a, b) => a.convertedAmount - b.convertedAmount);
+      
+      // Use recalculated colors based on converted amounts (single source of truth)
+      return streamsWithAmounts.map((item) => {
+        const color = incomeColorMap.get(item.stream.id) || item.stream.color;
+        return {
           value: item.convertedAmount,
-          color: item.stream.color,
+          color,
           label: item.stream.name,
-          stream: item.stream, // Keep stream reference for legend
-        }));
+          stream: item.stream,
+        };
+      });
     } else if (activeTab === 'expense') {
-      return expenseStreams
+      const streamsWithAmounts = expenseStreams
         .map((stream) => ({
           stream,
           convertedAmount: getConvertedAmount(stream),
         }))
         .filter((item) => item.convertedAmount > 0)
-        .sort((a, b) => a.convertedAmount - b.convertedAmount) // Sort ascending (least to most)
-        .map((item) => ({
+        .sort((a, b) => a.convertedAmount - b.convertedAmount);
+      
+      // Use recalculated colors based on converted amounts (for consistency with tax)
+      const expenseData: Array<{
+        value: number;
+        color: string;
+        label: string;
+        stream?: Stream;
+      }> = streamsWithAmounts.map((item) => {
+        // Use recalculated color from expenseColorMap, fallback to stored color
+        const color = expenseColorMap.get(item.stream.id) || item.stream.color;
+        return {
           value: item.convertedAmount,
-          color: item.stream.color,
+          color,
           label: item.stream.name,
-          stream: item.stream, // Keep stream reference for legend
-        }));
+          stream: item.stream,
+        };
+      });
+
+      // Always add taxes as a virtual expense (even if $0)
+      const hasOtherExpenses = expenseData.length > 0;
+      const taxValue = !hasOtherExpenses && taxAmount === 0 ? 0.01 : taxAmount;
+      
+      expenseData.push({
+        value: taxValue,
+        color: expenseColorMap.taxColor || getCashFlowExpenseColor(),
+        label: 'Taxes',
+      });
+
+      // Sort all expenses (including taxes)
+      return expenseData.sort((a, b) => a.value - b.value);
     } else {
       // Net Margin tab - 2 slices (sort by value, least to most)
       const data = [];
       if (incomeTotal > 0) {
         data.push({
           value: incomeTotal,
-          color: '#1A3FBC',
+          color: getCashFlowIncomeColor(),
           label: 'Income',
         });
       }
-      if (expenseTotal > 0) {
+      if (expenseTotalWithTax > 0) {
         data.push({
-          value: expenseTotal,
-          color: '#FFB6C1',
+          value: expenseTotalWithTax,
+          color: getCashFlowExpenseColor(),
           label: 'Expense',
         });
       }
-      // Sort by value ascending (least to most)
       return data.sort((a, b) => a.value - b.value);
     }
-  }, [activeTab, incomeStreams, expenseStreams, viewPeriod, incomeTotal, expenseTotal]);
+  }, [activeTab, incomeStreams, expenseStreams, viewPeriod, incomeTotal, expenseTotalWithTax, taxAmount, incomeColorMap, expenseColorMap, getConvertedAmount]);
 
   const currentStreams = activeTab === 'income' ? incomeStreams : expenseStreams;
-  const total = activeTab === 'income' ? incomeTotal : activeTab === 'expense' ? expenseTotal : netTotal;
-
-  // Memoize sorted streams list for display (least to most)
-  const sortedStreams = useMemo(() => {
-    return [...currentStreams].sort((a, b) => getConvertedAmount(a) - getConvertedAmount(b));
-  }, [currentStreams, viewPeriod]);
+  const total = activeTab === 'income' ? incomeTotal : activeTab === 'expense' ? expenseTotalWithTax : netTotal;
 
   // Calculate percentages
   const getStreamPercent = (amount: number): number => {
     if (activeTab === 'net') {
-      const totalForPercent = incomeTotal + expenseTotal;
+      const totalForPercent = incomeTotal + expenseTotalWithTax;
       return totalForPercent > 0 ? (amount / totalForPercent) * 100 : 0;
     }
     return total > 0 ? (amount / total) * 100 : 0;
   };
 
-  const getPeriodLabel = (period: PeriodType): string => {
-    switch (period) {
-      case 'monthly':
-        return 'Monthly';
-      case 'weekly':
-        return 'Weekly';
-      case 'biweekly':
-        return 'Bi-Weekly';
-      case 'yearly':
-        return 'Yearly';
-    }
-  };
+  // Show loading skeleton
+  if (status === 'loading') {
+    return <DashboardSkeleton />;
+  }
+
+  // Show error state
+  if (status === 'error') {
+    return <HydrationErrorState />;
+  }
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Dashboard</Text>
-      </View>
-
-      {/* Period Selector */}
-      <View style={styles.periodSelector}>
-        <Text style={styles.periodLabel}>View Period:</Text>
-        <View style={styles.periodButtons}>
-          {(['monthly', 'weekly', 'biweekly', 'yearly'] as PeriodType[]).map((period) => (
-            <TouchableOpacity
-              key={period}
-              style={[
-                styles.periodButton,
-                viewPeriod === period && styles.periodButtonActive,
-              ]}
-              onPress={() => setViewPeriod(period)}
-            >
-              <Text
-                style={[
-                  styles.periodButtonText,
-                  viewPeriod === period && styles.periodButtonTextActive,
-                ]}
-              >
-                {getPeriodLabel(period)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+      <StatusBar style="dark" translucent backgroundColor="transparent" />
+      {/* Gradient overlay at top to blend with status bar */}
+      <LinearGradient
+        colors={['rgba(238, 240, 246, 1)', 'rgba(238, 240, 246, 0)']}
+        style={[styles.gradientOverlay, { height: insets.top + 16 }]}
+        pointerEvents="none"
+      />
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingTop: insets.top + 12 } // Safe area + reasonable spacing
+        ]}
+        contentInsetAdjustmentBehavior="never"
+        contentInset={{ top: 0, bottom: 0 }}
+        scrollIndicatorInsets={{ top: insets.top }}
+      >
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <ProfileScenarioHeader />
+          </View>
+          <TouchableOpacity
+            style={styles.settingsButton}
+            onPress={() => router.push('./settings' as any)}
+          >
+            <Settings size={20} color="#101A3A" />
+          </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Segmented Control */}
-      <View style={styles.segmentedControl}>
-        <TouchableOpacity
-          style={[styles.segment, activeTab === 'income' && styles.segmentActive]}
-          onPress={() => setActiveTab('income')}
-        >
-          <Text
-            style={[
-              styles.segmentText,
-              activeTab === 'income' && styles.segmentTextActive,
-            ]}
-          >
-            Income
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.segment, activeTab === 'expense' && styles.segmentActive]}
-          onPress={() => setActiveTab('expense')}
-        >
-          <Text
-            style={[
-              styles.segmentText,
-              activeTab === 'expense' && styles.segmentTextActive,
-            ]}
-          >
-            Expenses
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.segment, activeTab === 'net' && styles.segmentActive]}
-          onPress={() => setActiveTab('net')}
-        >
-          <Text
-            style={[
-              styles.segmentText,
-              activeTab === 'net' && styles.segmentTextActive,
-            ]}
-          >
-            Cash Flow
-          </Text>
-        </TouchableOpacity>
-      </View>
+        <PeriodSelector viewPeriod={viewPeriod} onPeriodChange={setViewPeriod} />
 
-      {/* Chart Card */}
-      <View style={styles.card}>
-        {chartData.length > 0 ? (
-          <View style={styles.chartContainer}>
-            <PieChart
-              data={[...chartData]}
-              donut
-              radius={120}
-              innerRadius={80}
-              innerCircleColor="#F7F8FC"
-              initialAngle={0}
-              centerLabelComponent={() => (
-                <View style={styles.centerLabel}>
-                  <Text style={styles.centerValue}>
-                    {formatCurrency(total)}
-                  </Text>
-                  {activeTab === 'net' && (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>
-                        {formatPercent(netMarginPercent)} Margin
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              )}
-            />
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
-              Add your first stream to see the breakdown.
-            </Text>
-          </View>
+        <TabSelector activeTab={activeTab} onTabChange={setActiveTab} />
+
+        <ChartCard
+          activeTab={activeTab}
+          chartData={chartData}
+          total={total}
+          netMarginPercent={netMarginPercent}
+        />
+
+        {activeTab === 'net' && (
+          <NetMarginSummary
+            incomeTotal={incomeTotal}
+            expenseTotalWithTax={expenseTotalWithTax}
+            viewPeriod={viewPeriod}
+            getStreamPercent={getStreamPercent}
+          />
         )}
-      </View>
 
-      {/* Net Margin Summary */}
-      {activeTab === 'net' && (incomeTotal > 0 || expenseTotal > 0) && (
-        <View style={styles.card}>
-          <Text style={styles.formTitle}>Summary</Text>
-          {incomeTotal > 0 && (
-            <View style={styles.streamRow}>
-              <View style={[styles.streamDot, { backgroundColor: '#1A3FBC' }]} />
-              <View style={styles.streamInfo}>
-                <Text style={styles.streamName}>Income</Text>
-                <Text style={styles.streamAmount}>
-                  {formatCurrency(incomeTotal)} / {getPeriodLabel(viewPeriod)} • {formatPercent(getStreamPercent(incomeTotal))}
-                </Text>
-              </View>
-            </View>
-          )}
-          {expenseTotal > 0 && (
-            <View style={styles.streamRow}>
-              <View style={[styles.streamDot, { backgroundColor: '#FFB6C1' }]} />
-              <View style={styles.streamInfo}>
-                <Text style={styles.streamName}>Expenses</Text>
-                <Text style={styles.streamAmount}>
-                  {formatCurrency(expenseTotal)} / {getPeriodLabel(viewPeriod)} • {formatPercent(getStreamPercent(expenseTotal))}
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* Streams List */}
-      {activeTab !== 'net' && sortedStreams.length > 0 && (
-        <View style={styles.card}>
-          <Text style={styles.formTitle}>
-            {activeTab === 'income' ? 'Income' : 'Expense'} Streams
-          </Text>
-          {sortedStreams.map((stream) => {
-            const convertedAmount = getConvertedAmount(stream);
-            const percent = getStreamPercent(convertedAmount);
-            return (
-              <View key={stream.id} style={styles.streamRow}>
-                <View style={[styles.streamDot, { backgroundColor: stream.color }]} />
-                <View style={styles.streamInfo}>
-                  <Text style={styles.streamName}>{stream.name}</Text>
-                  <Text style={styles.streamAmount}>
-                    {formatCurrency(convertedAmount)} / {getPeriodLabel(viewPeriod)} • {formatPercent(percent)}
-                  </Text>
-                  {stream.period !== viewPeriod && (
-                    <Text style={styles.streamOriginal}>
-                      ({formatCurrency(stream.amount)} / {getPeriodLabel(stream.period)})
-                    </Text>
-                  )}
-                </View>
-                <View style={styles.streamActions}>
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => handleEditStream(stream)}
-                  >
-                    <Ionicons name="pencil-outline" size={18} color="#8E8E93" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => handleDeleteStream(stream)}
-                  >
-                    <Ionicons name="trash-outline" size={18} color="#B71C1C" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            );
-          })}
-        </View>
-      )}
+        {activeTab !== 'net' && chartData.length > 0 && (
+          <StreamsList
+            activeTab={activeTab}
+            streams={currentStreams}
+            viewPeriod={viewPeriod}
+            taxAmount={taxAmount}
+            taxColor={taxColor}
+            incomeColorMap={incomeColorMap}
+            expenseColorMap={expenseColorMap}
+            getConvertedAmount={getConvertedAmount}
+            getStreamPercent={getStreamPercent}
+            onEdit={handleEditStream}
+            onDelete={handleDeleteStream}
+            onTaxPress={() => setShowTaxAllocationSheet(true)}
+          />
+        )}
       </ScrollView>
 
-      {/* Floating Add Button */}
-      {activeTab !== 'net' && (
-        <TouchableOpacity style={styles.fab} onPress={handleOpenModal}>
-          <Text style={styles.fabText}>+</Text>
-        </TouchableOpacity>
-      )}
+      <FloatingAddButton
+        visible={activeTab !== 'net'}
+        onPress={handleOpenModal}
+      />
 
-      {/* Add Stream Modal - Bottom Drawer */}
-      <Modal
+      <AddStreamModal
         visible={isModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={handleCloseModal}
-      >
-        <View style={styles.drawerOverlay}>
-          <TouchableOpacity
-            style={styles.drawerOverlayTouchable}
-            activeOpacity={1}
-            onPress={handleCloseModal}
-          />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.drawerContainer}
-            keyboardVerticalOffset={0}
-          >
-            <View style={styles.drawerContent} onStartShouldSetResponder={() => true}>
-              {/* Drawer Handle */}
-              <View style={styles.drawerHandle} />
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>
-                    {editingStreamId ? 'Edit' : 'Add'} {activeTab === 'income' ? 'Income' : 'Expense'}
-                  </Text>
-                  <TouchableOpacity onPress={handleCloseModal} style={styles.closeButton}>
-                    <Text style={styles.closeButtonText}>×</Text>
-                  </TouchableOpacity>
-                </View>
-                <ScrollView 
-                  style={styles.modalFormScroll}
-                  contentContainerStyle={styles.modalForm}
-                  keyboardShouldPersistTaps="handled"
-                  showsVerticalScrollIndicator={false}
-                  keyboardDismissMode="interactive"
-                >
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Stream name"
-                    placeholderTextColor="#999"
-                    value={newStreamName}
-                    onChangeText={setNewStreamName}
-                    autoFocus={Platform.OS === 'ios'}
-                    showSoftInputOnFocus={true}
-                    keyboardType="default"
-                    editable={true}
-                  />
-                <Text style={styles.inputLabel}>Color:</Text>
-                <View style={styles.colorPickerContainer}>
-                  <TouchableOpacity
-                    style={styles.colorPickerButton}
-                    onPress={() => setIsColorPickerVisible(!isColorPickerVisible)}
-                  >
-                    <View style={[styles.colorPickerPreview, { backgroundColor: newStreamColor }]} />
-                    <Text style={styles.colorPickerButtonText}>Select Color</Text>
-                    <Ionicons 
-                      name={isColorPickerVisible ? "chevron-up" : "chevron-down"} 
-                      size={20} 
-                      color="#666" 
-                    />
-                  </TouchableOpacity>
-                  {isColorPickerVisible && (
-                    <View style={styles.colorPickerDropdown}>
-                        {COLOR_PALETTE.map((color) => (
-                          <TouchableOpacity
-                            key={color}
-                            style={styles.colorPickerDropdownItem}
-                            onPress={() => {
-                              setNewStreamColor(color);
-                              setIsColorPickerVisible(false);
-                            }}
-                          >
-                            <View style={[styles.colorPickerPopupDot, { backgroundColor: color }]} />
-                            <Text style={styles.colorPickerDropdownItemText}>Color</Text>
-                            {newStreamColor === color && (
-                              <Ionicons name="checkmark" size={20} color="#1A3FBC" style={styles.colorPickerPopupCheck} />
-                            )}
-                          </TouchableOpacity>
-                        ))}
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.inputLabel}>Amount Period:</Text>
-                <View style={styles.modalPeriodSelector}>
-                  {(['monthly', 'weekly', 'biweekly', 'yearly'] as PeriodType[]).map((period) => (
-                    <TouchableOpacity
-                      key={period}
-                      style={[
-                        styles.modalPeriodButton,
-                        newStreamPeriod === period && styles.modalPeriodButtonActive,
-                      ]}
-                      onPress={() => setNewStreamPeriod(period)}
-                    >
-                      <Text
-                        style={[
-                          styles.modalPeriodButtonText,
-                          newStreamPeriod === period && styles.modalPeriodButtonTextActive,
-                        ]}
-                      >
-                        {getPeriodLabel(period)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <TextInput
-                  style={styles.input}
-                  placeholder={`Amount (${getPeriodLabel(newStreamPeriod)})`}
-                  placeholderTextColor="#999"
-                  value={newStreamAmount}
-                  onChangeText={setNewStreamAmount}
-                  keyboardType="numeric"
-                  showSoftInputOnFocus={true}
-                />
-                <TouchableOpacity style={styles.addButton} onPress={handleAddStream}>
-                  <Text style={styles.addButtonText}>
-                    {editingStreamId ? 'Save Changes' : 'Add Stream'}
-                  </Text>
-                </TouchableOpacity>
-                </ScrollView>
-              </View>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
-      </Modal>
+        activeTab={activeTab}
+        editingStreamId={editingStreamId}
+        streamName={newStreamName}
+        streamAmount={newStreamAmount}
+        streamPeriod={newStreamPeriod}
+        onNameChange={setNewStreamName}
+        onAmountChange={setNewStreamAmount}
+        onPeriodChange={setNewStreamPeriod}
+        onSave={handleAddStream}
+        onClose={handleCloseModal}
+      />
 
-      {/* Delete Confirmation Dialog */}
-      <Modal
+      <DeleteDialog
         visible={isDeleteDialogVisible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={handleCancelDelete}
-      >
-        <View style={styles.deleteDialogOverlay}>
-          <TouchableOpacity
-            style={styles.deleteDialogOverlayTouchable}
-            activeOpacity={1}
-            onPress={handleCancelDelete}
-          />
-          <View style={styles.deleteDialogContent}>
-            <Text style={styles.deleteDialogTitle}>Delete {activeTab === 'income' ? 'Income' : 'Expense'}?</Text>
-            <Text style={styles.deleteDialogMessage}>
-              Are you sure you want to delete "{streamToDelete?.name}"? This action cannot be undone.
-            </Text>
-            <View style={styles.deleteDialogButtons}>
-              <TouchableOpacity
-                style={styles.deleteDialogCancelButton}
-                onPress={handleCancelDelete}
-              >
-                <Text style={styles.deleteDialogCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.deleteDialogConfirmButton}
-                onPress={handleConfirmDelete}
-              >
-                <Text style={styles.deleteDialogConfirmText}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        activeTab={activeTab}
+        streamName={streamToDelete?.name || null}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+
+      {/* Tax Allocation Sheet */}
+      <TaxAllocationSheet
+        visible={showTaxAllocationSheet}
+        onClose={() => setShowTaxAllocationSheet(false)}
+      />
     </View>
   );
 }
-

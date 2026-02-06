@@ -1,0 +1,148 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#EEF0F6',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  contentContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 100,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  headerLeft: {
+    flex: 1,
+    marginRight: 12,
+  },
+  headerTitle: {
+    width: 120,
+    height: 24,
+    borderRadius: 8,
+    backgroundColor: '#D1D5DB',
+  },
+  settingsButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#D1D5DB',
+  },
+  periodSelector: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  periodButton: {
+    flex: 1,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#D1D5DB',
+  },
+  tabSelector: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 24,
+  },
+  tabButton: {
+    flex: 1,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#D1D5DB',
+  },
+  chartCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  chartContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    height: 240,
+  },
+  chartCircle: {
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: '#D1D5DB',
+  },
+  chartCenter: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chartValue: {
+    width: 100,
+    height: 28,
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: '#D1D5DB',
+  },
+  chartBadge: {
+    width: 80,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#D1D5DB',
+  },
+  streamRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  streamLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  streamColor: {
+    width: 4,
+    height: 40,
+    borderRadius: 2,
+    marginRight: 12,
+    backgroundColor: '#D1D5DB',
+  },
+  streamInfo: {
+    flex: 1,
+  },
+  streamName: {
+    width: 120,
+    height: 18,
+    borderRadius: 6,
+    marginBottom: 6,
+    backgroundColor: '#D1D5DB',
+  },
+  streamAmount: {
+    width: 80,
+    height: 16,
+    borderRadius: 6,
+    backgroundColor: '#D1D5DB',
+  },
+  streamPercent: {
+    width: 50,
+    height: 16,
+    borderRadius: 6,
+    backgroundColor: '#D1D5DB',
+  },
+});
