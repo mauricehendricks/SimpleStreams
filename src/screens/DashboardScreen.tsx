@@ -23,10 +23,9 @@ import { Stream, TabType, ViewPeriod } from '../state/types';
 import { usePremiumStore } from '../state/usePremiumStore';
 import { useSimpleStreamsStore } from '../state/useSimpleStreamsStore';
 import {
+  assignColorsToStreams,
   getCashFlowExpenseColor,
   getCashFlowIncomeColor,
-  getExpenseColor,
-  getIncomeColor
 } from '../utils/colorAssignment';
 import { convertAmount } from '../utils/periodConversion';
 import { styles } from './DashboardScreen.styles';
@@ -186,20 +185,20 @@ export default function DashboardScreen() {
       return colorMap;
     }
     
-    // Calculate colors for all income streams together based on converted amounts
-    const allIncomeItems = streamsWithAmounts.map(item => ({ 
-      amount: item.convertedAmount, 
-      id: item.stream.id 
-    }));
+    // Use assignColorsToStreams to calculate colors based on converted amounts
+    const itemsWithColors = assignColorsToStreams(
+      streamsWithAmounts.map(item => ({ 
+        amount: item.convertedAmount, 
+        id: item.stream.id 
+      })),
+      'income'
+    );
     
-    // Sort by amount to determine ranks (same logic as assignColorsToStreams)
-    const sorted = [...allIncomeItems].sort((a, b) => a.amount - b.amount);
-    
-    // Assign colors based on rank
-    sorted.forEach((item, index) => {
-      const rank = sorted.length > 1 ? index / (sorted.length - 1) : 1;
-      const color = getIncomeColor(rank);
-      colorMap.set(item.id, color);
+    // Map colors back to stream IDs
+    itemsWithColors.forEach(item => {
+      if (item.id) {
+        colorMap.set(item.id, item.color);
+      }
     });
     
     return colorMap;
@@ -235,18 +234,18 @@ export default function DashboardScreen() {
       ...(taxAmount > 0 ? [{ amount: taxAmount, id: 'tax', isTax: true }] : [])
     ];
     
-    // Sort by amount to determine ranks (same logic as assignColorsToStreams)
-    const sorted = [...allExpenseItems].sort((a, b) => a.amount - b.amount);
+    // Use assignColorsToStreams to calculate colors based on converted amounts
+    const itemsWithColors = assignColorsToStreams(
+      allExpenseItems.map(item => ({ amount: item.amount, id: item.id })),
+      'expense'
+    );
     
-    // Assign colors based on rank
-    sorted.forEach((item, index) => {
-      const rank = sorted.length > 1 ? index / (sorted.length - 1) : 1;
-      const color = getExpenseColor(rank);
-      
-      if (item.isTax) {
-        colorMap.taxColor = color;
-      } else {
-        colorMap.set(item.id, color);
+    // Map colors back to stream IDs and tax
+    itemsWithColors.forEach(item => {
+      if (item.id === 'tax') {
+        colorMap.taxColor = item.color;
+      } else if (item.id) {
+        colorMap.set(item.id, item.color);
       }
     });
     

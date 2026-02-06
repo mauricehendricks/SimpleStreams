@@ -53,9 +53,11 @@ export default function SettingsScreen() {
               Alert.alert('Success', 'Data has been reset.');
             } catch (error) {
               console.error('[Settings] Reset error:', error);
-              // Handle error gracefully - resetAllData should never fail, but if it does, 
-              // the state is already reset in memory via useHydrationGate
-              Alert.alert('Success', 'Data has been reset.');
+              Alert.alert(
+                'Reset Failed',
+                'Failed to reset data. Please try again. If the problem persists, you may need to reinstall the app.',
+                [{ text: 'OK' }]
+              );
             }
           },
         },
